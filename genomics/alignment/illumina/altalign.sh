@@ -6,7 +6,7 @@ export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
 source activate align
 
-HG=${BASEDIR}/../../genome/GRCh38Decoy.fa
+HG=${BASEDIR}/../../genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
 
 if [ -f ${HG} ]
 then
