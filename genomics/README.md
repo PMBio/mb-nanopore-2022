@@ -18,5 +18,7 @@ The input FASTQ files are assumed to be in the `./fastq` subdirectory.
 
 # Alignment
 
+Alignments for the ONT and Illumina data can be carried out using
 
+`cd alignment/ont/ && ./align.sh`
 
