@@ -12,7 +12,7 @@ To create a conda environment with the required tools just use
 
 The genome files are not included in the repository but can be downloaded using
 
-`cd genome/ && ./prepare_genome.sh
+`cd genome/ && ./prepare_genome.sh`
 
 The input FASTQ files are assumed to be in the `./fastq` subdirectory.
 
