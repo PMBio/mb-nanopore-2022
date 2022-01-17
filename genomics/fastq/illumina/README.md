@@ -1,3 +1,3 @@
-# Directory for the Illumina files
+# Directory for the Illumina FASTQ files
 
 
