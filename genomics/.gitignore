@@ -3,3 +3,5 @@
 .conda
 .mamba
 conda/
+genome/
+fastq/
