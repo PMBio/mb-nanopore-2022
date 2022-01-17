@@ -6,7 +6,7 @@ Analysis code for preprint
 
 # Project structure
 
-     |- chromothripsis
+     |- genomics
          |- code_tobias_here 
      |- epigenetics
          |- code_rene_here
