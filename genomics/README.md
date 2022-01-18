@@ -22,3 +22,5 @@ Alignments for the ONT and Illumina data can be carried out using
 
 `cd alignment/ont/ && ./align.sh`
 
+`cd alignment/illumina/ && ./altalign.sh`
+
