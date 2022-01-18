@@ -16,8 +16,8 @@ then
 	then
 	    ID=`echo ${F} | sed 's/^.*\///' | sed 's/.fastq.gz$//'`
 	    echo ${ID}
-	    minimap2 -t 6 -a -L -x map-ont -L ${HG} ${F} | samtools sort -o ${ID}.minimap2.srt.bam
-	    samtools index ${ID}.minimap2.srt.bam
+	    minimap2 -t 6 -a -L -x map-ont -L ${HG} ${F} | samtools sort -o ${ID}.bam
+	    samtools index ${ID}.bam
 	fi
     done
 fi
