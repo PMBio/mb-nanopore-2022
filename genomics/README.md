@@ -24,3 +24,8 @@ Alignments for the ONT and Illumina data can be carried out using
 
 `cd alignment/illumina/ && ./altalign.sh`
 
+# Alignment statistics
+
+To calculate the alignment error rate, genome coverage and other statistics.
+
+`cd qc/ont/ && ./qc.sh`
