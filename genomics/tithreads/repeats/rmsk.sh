@@ -7,7 +7,7 @@ for HG in hg19 hg38
 do
     echo ${HG}
     wget http://hgdownload.cse.ucsc.edu/goldenpath/${HG}/database/rmsk.txt.gz
-    zcat rmsk.txt.gz | awk -v OFS="\t" '{ print $6, $7, $8, $12, $11, $10 }' | sort -k1,1V -k2,2n > rmsk.${HG}.bed.gz
+    zcat rmsk.txt.gz | awk -v OFS="\t" '{ print $6, $7, $8, $12, $11, $10 }' | sort -k1,1V -k2,2n | uniq | gzip -c > rmsk.${HG}.bed.gz
 
     # Split by repeat class
     for REPEAT in `zcat rmsk.${HG}.bed.gz | cut -f 4 | grep -v "?" | sort | uniq`
