@@ -27,8 +27,9 @@ echo "#Simulations" ${N}
 echo -e "breakpoints\tfeature\tobsexp\tvalue" > shuffle.${TMP}.tsv
 zcat ${FEATURE}  | cut -f 1-3 | sort -k1,1V -k2,2n | uniq > feature.${TMP}.bed
 cat ${INPUT}  | cut -f 1-3 | sort -k1,1V -k2,2n | uniq > bp.${TMP}.bed
-OBS=`bedtools intersect -a feature.${TMP}.bed -b bp.${TMP}.bed | wc -l`
-if [ ${OBS} -gt 10 ]
+OBS=`bedtools intersect -a bp.${TMP}.bed -b feature.${TMP}.bed -wao | awk '$4!="."' | cut -f 1-3 | sort | uniq | wc -l`
+echo "#Observed overlaps" ${OBS}
+if [ ${OBS} -gt 1 ]
 then
     echo -e "${BREAKID}\t${FEATID}\tobserved\t${OBS}" >> shuffle.${TMP}.tsv
     for i in `seq 1 ${N}`
@@ -37,7 +38,7 @@ then
 	then
 	    echo "Iteration ${i}"
 	fi
-	VAL=`bedtools shuffle -maxTries 10000 -chrom -noOverlapping -excl ${GENOME}.gaps -i bp.${TMP}.bed -g ${GENOME}.chrom.sizes | bedtools intersect -a feature.${TMP}.bed -b - | wc -l`
+	VAL=`bedtools shuffle -maxTries 10000 -chrom -noOverlapping -excl ${GENOME}.gaps -i feature.${TMP}.bed -g ${GENOME}.chrom.sizes | bedtools intersect -wao -a bp.${TMP}.bed -b - | awk '$4!="."' | cut -f 1-3 | sort | uniq | wc -l`
 	echo -e "${BREAKID}\t${FEATID}\texpected\t${VAL}" >> shuffle.${TMP}.tsv
     done
     # Plot

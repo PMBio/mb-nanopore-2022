@@ -1,6 +1,7 @@
 #!/bin/bash
 
 REGIONS=tithreads
+NSIM=1000
 
 # Get repeat masker track
 for HG in hg19 hg38
@@ -17,7 +18,7 @@ do
 	zcat rmsk.${HG}.bed.gz | grep -w "${REPEAT}" | grep -v "^[^\t]*_" | gzip -c > rmsk.${REPEAT}.${HG}.bed.gz
 	if [ `zcat rmsk.${HG}.bed.gz | head | wc -l` -gt 0 ]
 	then
-	    ./shuffle.sh ${HG} 1000 ${REGIONS}.${HG}.bed rmsk.${REPEAT}.${HG}.bed.gz
+	    ./shuffle.sh ${HG} ${NSIM} ${REGIONS}.${HG}.bed rmsk.${REPEAT}.${HG}.bed.gz
 	fi
     done
 done
