@@ -15,7 +15,7 @@ do
     for REPEAT in `zcat rmsk.${HG}.bed.gz | cut -f 4 | grep -v "?" | sort | uniq`
     do
 	echo ${REPEAT}
-	zcat rmsk.${HG}.bed.gz | grep -w "${REPEAT}" | grep -v "^[^\t]*_" | gzip -c > rmsk.${REPEAT}.${HG}.bed.gz
+	zcat rmsk.${HG}.bed.gz | grep -w "${REPEAT}" | grep -v "^[a-zA-Z0-9]*_" | grep -v chrMT | gzip -c > rmsk.${REPEAT}.${HG}.bed.gz
 	if [ `zcat rmsk.${HG}.bed.gz | head | wc -l` -gt 0 ]
 	then
 	    ./shuffle.sh ${HG} ${NSIM} ${REGIONS}.${HG}.bed rmsk.${REPEAT}.${HG}.bed.gz
