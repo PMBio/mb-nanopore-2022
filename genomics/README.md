@@ -37,3 +37,9 @@ To calculate the alignment error rate, genome coverage and other statistics.
 Genome-wide read-depth profiles
 
 `cd coverage/ont/ && ./cov.sh`
+
+# Single-nucleotide variant (SNVs) calling and small insertions and deletions (InDels)
+
+SNVs and InDel calling using short-read data.
+
+`cd snv/illumina/ && ./snv.sh`
