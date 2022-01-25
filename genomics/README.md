@@ -29,3 +29,11 @@ Alignments for the ONT and Illumina data can be carried out using
 To calculate the alignment error rate, genome coverage and other statistics.
 
 `cd qc/ont/ && ./qc.sh`
+
+`cd qc/illumina/ && ./qc.sh`
+
+# Read-depth profiles and copy-number variants
+
+Genome-wide read-depth profiles
+
+`cd coverage/ont/ && ./cov.sh`
