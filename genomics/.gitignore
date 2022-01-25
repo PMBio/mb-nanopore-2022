@@ -2,6 +2,7 @@
 .align
 .conda
 .mamba
+.variants
 conda/
 genome/
 fastq/
