@@ -57,4 +57,4 @@ write.table(combined,"./expression/GTEX_SRP151960_Medulloblastoma.exp_gene_tpm.g
 
 plot(pcs$x)
 
-write.table(expOut, file=fileOut, quote=F, sep="\t",row.names=F)
+write.table(pcs$x[,c(1:5],"./expression/GTEX_SRP151960_Medulloblastoma.exp_gene_tpm.gct.pcs.txt",quote=F, sep="\t",col.names=NA)
