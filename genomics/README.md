@@ -46,6 +46,16 @@ SNVs and InDel calling using short-read data.
 
 `cd snv/illumina/ && ./snv.sh`
 
+## Structural variant calling
+
+For the short-read data we applied [delly](https://github.com/dellytools/delly) to call structural variants and the pre-defined somatic workflow.
+
+`cd sv/illumina/ && ./delly.sh`
+
+For the long read data we applied multiple methods
+
+`cd sv/ont/ && ./sv.sh`
+
 ## Telomere sequences associated with SVs
 
 For the long-read data, [lorax](https://github.com/tobiasrausch/lorax) can be used to call SV to telomere junctions
