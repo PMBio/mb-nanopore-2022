@@ -2,13 +2,13 @@
 
 This repository contains the genomic analysis scripts.
 
-# Installation
+## Installation
 
 To create a conda environment with the required tools just use
 
 `make all`
 
-# Downloading and preparing reference files
+## Downloading and preparing reference files
 
 The genome files are not included in the repository but can be downloaded using
 
@@ -16,7 +16,7 @@ The genome files are not included in the repository but can be downloaded using
 
 The input FASTQ files are assumed to be in the `./fastq` subdirectory.
 
-# Alignment
+## Alignment
 
 Alignments for the ONT and Illumina data can be carried out using
 
@@ -24,7 +24,7 @@ Alignments for the ONT and Illumina data can be carried out using
 
 `cd alignment/illumina/ && ./altalign.sh`
 
-# Alignment statistics
+## Alignment statistics
 
 To calculate the alignment error rate, genome coverage and other statistics.
 
@@ -32,14 +32,26 @@ To calculate the alignment error rate, genome coverage and other statistics.
 
 `cd qc/illumina/ && ./qc.sh`
 
-# Read-depth profiles and copy-number variants
+## Read-depth profiles and copy-number variants
 
 Genome-wide read-depth profiles
 
 `cd coverage/ont/ && ./cov.sh`
 
-# Single-nucleotide variant (SNVs) calling and small insertions and deletions (InDels)
+`cd coverage/illumina/ && ./cov.sh`
+
+## Single-nucleotide variant (SNVs) calling and small insertions and deletions (InDels)
 
 SNVs and InDel calling using short-read data.
 
 `cd snv/illumina/ && ./snv.sh`
+
+## Telomere sequences associated with SVs
+
+For the long-read data, [lorax](https://github.com/tobiasrausch/lorax) can be used to call SV to telomere junctions
+
+`cd telomere/ont/ && ./telomere.sh`
+
+For the short-read data, [alfred](https://github.com/tobiasrausch/alfred) computes binned counts of telomeric motifs that can be post-processed to filter tumor-only candidate windows.
+
+`cd telomere/illumina/ && ./telomere.sh`
