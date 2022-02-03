@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 # Targets
-TARGETS = .conda .mamba .align .variants .assembly
+TARGETS = .conda .mamba .align .variants .assembly .telomere
 PBASE=$(shell pwd)
 
 all:   	$(TARGETS)
@@ -20,6 +20,9 @@ all:   	$(TARGETS)
 
 .assembly: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n assembly samtools bcftools htslib wtdbg mummer minimap2 alfred && touch .assembly
+
+.telomere: .conda .mamba
+	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n telomere samtools htslib minimap2 alfred && touch .telomere
 
 clean:
 	rm -f *~
