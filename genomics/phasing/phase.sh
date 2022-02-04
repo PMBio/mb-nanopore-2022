@@ -89,4 +89,16 @@ then
 fi
 
 # Split by haplotype
-./split.sh
+if [ ! -d split_rephase ]
+then
+    ./split.sh
+fi
+
+# Germline statistics
+for CS in rephase final
+do
+    echo ${CS} "biallelic SNPs"
+    bcftools view -m2 -M2 -v snps split_${CS}/blood.phased.bcf | grep -v "^#" | wc -l
+    echo ${CS} "biallelic InDel"
+    bcftools view -m2 -M2 -v indels split_${CS}/blood.phased.bcf | grep -v "^#" | wc -l
+done
