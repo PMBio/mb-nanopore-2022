@@ -1,0 +1,5 @@
+*.vcf.gz
+*.vcf.gz.tbi
+*.bcf
+*.bcf.csi
+split_*/

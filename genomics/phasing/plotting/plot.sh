@@ -2,7 +2,7 @@
 
 for CHR in 3
 do
-    for METHOD in whatshap shapeit
+    for METHOD in whatshap shapeit rephase final
     do
 	INFILE=../${METHOD}.af.bcf
 	if [ -f ${INFILE} ]
