@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 # Targets
-TARGETS = .conda .mamba .align .variants .assembly .telomere .templins
+TARGETS = .conda .mamba .align .variants .phasing .assembly .telomere .templins
 PBASE=$(shell pwd)
 
 all:   	$(TARGETS)
@@ -17,6 +17,9 @@ all:   	$(TARGETS)
 
 .variants: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n variants samtools bcftools htslib delly nanovar sniffles freebayes && touch .variants
+
+.phasing: .conda .mamba
+	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n phasing samtools bcftools htslib whatshap && touch .phasing
 
 .assembly: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n assembly samtools bcftools htslib wtdbg mummer minimap2 alfred && touch .assembly

@@ -16,7 +16,7 @@ do
 	ID=`echo ${BAM} | sed 's/^.*\///' | sed 's/.bam$//'`
 	echo ${ID}
 	# Delly
-	delly lr -y ont -p 20 -g ${HG} -o ${ID}.bcf ${BAM} > ${ID}.log 2> ${ID}.err &
+	delly lr -y ont -p 20 -g ${HG} -o ${ID}.bcf ${BAM}
 	# Nanovar
 	nanovar -x ont -t 8 -f hg38 ${BAM} ${HG} ${ID}_dir
 	# Sniffles

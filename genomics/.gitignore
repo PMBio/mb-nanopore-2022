@@ -3,6 +3,10 @@
 .conda
 .mamba
 .variants
+.phasing
+.assembly
+.telomere
+.templins
 conda/
 genome/
 fastq/
