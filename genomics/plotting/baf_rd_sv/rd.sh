@@ -47,7 +47,7 @@ do
 		for CHR in `seq 1 22`
 		do
 		    echo "Plotting" chr${CHR}
-		    #Rscript covWithSV.R ${COV} ${TUMOR}.vaf.tsv ${TUMOR}.sv chr${CHR}:0-250000000
+		    Rscript covWithSV.R ${COV} ${TUMOR}.vaf.tsv ${TUMOR}.sv chr${CHR}:0-250000000
 		done
 	    fi
 	fi

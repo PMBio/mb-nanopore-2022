@@ -64,6 +64,12 @@ For the long read data we applied multiple methods
 
 `cd sv/ont/ && ./sv.sh`
 
+## Figures and plots
+
+Read-depth plots with phased heterozygous allele frequencies and structural variants were generated using
+
+`cd plotting/baf_rd_sv/ && ./rd.sh`
+
 ## Telomere sequences associated with SVs
 
 For the long-read data, [lorax](https://github.com/tobiasrausch/lorax) can be used to call SV to telomere junctions
