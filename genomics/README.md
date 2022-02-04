@@ -70,6 +70,10 @@ Read-depth plots with phased heterozygous allele frequencies and structural vari
 
 `cd plotting/baf_rd_sv/ && ./rd.sh`
 
+Alignment plots for SVs were generated with [IGV](https://software.broadinstitute.org/software/igv/) and [wally](https://github.com/tobiasrausch/wally) using
+
+`cd plotting/sv_alignments/ && ./wally.sh`
+
 ## Telomere sequences associated with SVs
 
 For the long-read data, [lorax](https://github.com/tobiasrausch/lorax) can be used to call SV to telomere junctions
