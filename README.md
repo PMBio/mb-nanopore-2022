@@ -6,13 +6,9 @@ Analysis code for preprint
 
 # Project structure
 
-     |- Genomics
-         |- [Readme](https://github.com/PMBio/mb-nanopore-2022/blob/main/genomics/README.md)
-     |- Epigenetics
-         |- code_rene_here
-     |- Transcriptomics
-         |- code_marc_here
-    
+* Genomics: [Readme](https://github.com/PMBio/mb-nanopore-2022/blob/main/genomics)
+* Epigenetics: [Readme](https://github.com/PMBio/mb-nanopore-2022/tree/main/epigenetics)
+* Transcriptomics: [Readme](https://github.com/PMBio/mb-nanopore-2022/tree/main/transcriptomics)
 
 # Data
 
