@@ -30,4 +30,5 @@ do
 	    ./shuffle.sh ${HG} ${NSIM} tithreads.${HG}.bed rmsk.${REPEAT}.${HG}.bed.gz
 	fi
     done
+    rm rmsk.*.bed.gz shuffle.rmsk*tsv
 done

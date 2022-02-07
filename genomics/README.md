@@ -93,3 +93,19 @@ For the long-read data, [lorax](https://github.com/tobiasrausch/lorax) can be us
 For the short-read data, [rayas](https://github.com/tobiasrausch/rayas) infers templated insertion threads using split-reads and depth of coverage
 
 `cd tithreads/illumina/ && ./tithreads.sh`
+
+To compute the overlap between long-read and short-read predictions
+
+`cd tithreads/analysis/overlap_ont_illumina/ && ./overlap.sh`
+
+Various plotting scripts for self-alignments and alignments against templated insertion source sequences for selected long reads
+
+`cd tithreads/analysis/plotting/ && ./run.sh`
+
+Enrichment/depletion analysis with respect to annotated repeats
+
+`cd tithreads/analysis/repeats/ && ./rmsk.sh`
+
+Internal repeat motif length using subsampling
+
+`cd tithreads/analysis/repetitions/ && ./subsample.sh`
