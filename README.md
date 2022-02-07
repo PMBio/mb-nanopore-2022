@@ -1,16 +1,16 @@
 # Medulloblastoma Nanopore 2022
 
-Analysis code for preprint 
+Analysis code for preprint
 
 [TODO: author list], 2022. Nanopore sequencing of medulloblastoma reveals novel somatic rearrangement patterns and epigenetic signatures, boiRxiv doi: [TODO] 
 
 # Project structure
 
-     |- genomics
-         |- code_tobias_here 
-     |- epigenetics
+     |- Genomics
+         |- [Readme](https://github.com/PMBio/mb-nanopore-2022/blob/main/genomics/README.md)
+     |- Epigenetics
          |- code_rene_here
-     |- transcriptomics
+     |- Transcriptomics
          |- code_marc_here
     
 
