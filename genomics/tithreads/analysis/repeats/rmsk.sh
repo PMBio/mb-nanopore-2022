@@ -9,11 +9,13 @@ source activate variants
 NSIM=100
 
 # ONT templated insertion thread source segments
-cat ../../ont/stats.ti.tsv  | cut -f 2-4 | sort -k1,1V -k2,2n | uniq > tithreads.hg38.bed
+cat ${BASEDIR}/../../ont/stats.ti.tsv  | cut -f 2-4 | sort -k1,1V -k2,2n | uniq > tithreads.hg38.bed
+
+# PCAWG templated insertion threads
+tail -n +2 ${BASEDIR}/../pcawg/stats.ti.tsv | cut -f 2-4 | sed 's/^/chr/' | sort -k1,1V -k2,2n | uniq > tithreads.hg19.bed
 
 # Get repeat masker track
-#for HG in hg19 hg38
-for HG in hg38
+for HG in hg19 hg38
 do
     echo ${HG}
     wget http://hgdownload.cse.ucsc.edu/goldenpath/${HG}/database/rmsk.txt.gz

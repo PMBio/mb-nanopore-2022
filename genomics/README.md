@@ -109,3 +109,7 @@ Enrichment/depletion analysis with respect to annotated repeats
 Internal repeat motif length using subsampling
 
 `cd tithreads/analysis/repetitions/ && ./subsample.sh`
+
+PCAWG related analysis scripts are available in a separate folder
+
+`cd tithreads/analysis/pcawg/ && ./run.sh`
