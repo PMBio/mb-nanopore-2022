@@ -83,3 +83,13 @@ For the long-read data, [lorax](https://github.com/tobiasrausch/lorax) can be us
 For the short-read data, [alfred](https://github.com/tobiasrausch/alfred) computes binned counts of telomeric motifs that can be post-processed to filter tumor-only candidate windows.
 
 `cd telomere/illumina/ && ./telomere.sh`
+
+## Templated insertion threads
+
+For the long-read data, [lorax](https://github.com/tobiasrausch/lorax) can be used to call templated insertion threads
+
+`cd tithreads/ont/ && ./tithreads.sh`
+
+For the short-read data, [rayas](https://github.com/tobiasrausch/rayas) infers templated insertion threads using split-reads and depth of coverage
+
+`cd tithreads/illumina/ && ./tithreads.sh`
