@@ -1,10 +1,19 @@
 #!/bin/bash
 
-REGIONS=tithreads
-NSIM=1000
+SCRIPT=$(readlink -f "$0")
+BASEDIR=$(dirname "$SCRIPT")
+export PATH=${BASEDIR}/../../../conda/bin:${PATH}
+
+source activate variants
+
+NSIM=100
+
+# ONT templated insertion thread source segments
+cat ../../ont/stats.ti.tsv  | cut -f 2-4 | sort -k1,1V -k2,2n | uniq > tithreads.hg38.bed
 
 # Get repeat masker track
-for HG in hg19 hg38
+#for HG in hg19 hg38
+for HG in hg38
 do
     echo ${HG}
     wget http://hgdownload.cse.ucsc.edu/goldenpath/${HG}/database/rmsk.txt.gz
@@ -18,7 +27,7 @@ do
 	zcat rmsk.${HG}.bed.gz | grep -w "${REPEAT}" | grep -v "^[a-zA-Z0-9]*_" | grep -v chrMT | gzip -c > rmsk.${REPEAT}.${HG}.bed.gz
 	if [ `zcat rmsk.${HG}.bed.gz | head | wc -l` -gt 0 ]
 	then
-	    ./shuffle.sh ${HG} ${NSIM} ${REGIONS}.${HG}.bed rmsk.${REPEAT}.${HG}.bed.gz
+	    ./shuffle.sh ${HG} ${NSIM} tithreads.${HG}.bed rmsk.${REPEAT}.${HG}.bed.gz
 	fi
     done
 done

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+SCRIPT=$(readlink -f "$0")
+BASEDIR=$(dirname "$SCRIPT")
+export PATH=${BASEDIR}/../../../conda/bin:${PATH}
+
+source activate variants
+
 if [ $# -ne 4 ]
 then
     echo ""

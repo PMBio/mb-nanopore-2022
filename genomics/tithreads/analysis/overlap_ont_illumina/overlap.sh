@@ -14,6 +14,7 @@ then
 	cat ${BASEDIR}/../../ont/stats.ti.tsv | awk '$9=="'${CLUSTID}'"' | cut -f 2-4,8 | sort -k1,1V -k2,2n | uniq > ont.bed
 	cat ${BASEDIR}/../../illumina/stats.ti.tsv | cut -f 2-4,8 | sort -k1,1V -k2,2n | uniq > illumina.bed
 	bedtools  intersect -a ont.bed -b illumina.bed -wao
+	bedtools  intersect -a ont.bed -b illumina.bed -wao | awk '$5!="." && $4>=10' | cut -f 1-3 > core.${CLUSTID}.bed
 	rm ont.bed illumina.bed 
     done
 fi
