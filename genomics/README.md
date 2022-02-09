@@ -113,3 +113,10 @@ Internal repeat motif length using subsampling
 PCAWG related analysis scripts are available in a separate folder
 
 `cd tithreads/analysis/pcawg/ && ./run.sh`
+
+## Targeted assembly
+
+Using phased germline variants and amplicon regions from a somatic copy-number alteration analysis (SCNAs) [lorax](https://github.com/tobiasrausch/lorax) can be used to select reads for a targeted amplicon assembly. These reads can then be used with any long-read assembler, our choice in this project was [wtdbg2](https://github.com/ruanjue/wtdbg2). Lastly, we project the alignments back to the reference to infer breakpoints.
+
+`cd targeted_assembly/ && ./assemble.sh`
+
