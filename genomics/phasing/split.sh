@@ -21,6 +21,7 @@ do
 	then
 	    ID=`echo ${BAM} | sed 's/^.*\///' | sed 's/.bam$//'`
 	    echo ${ID}
+	    if [ ${ID} == "Germline" ]; then continue; fi
 	    samtools view -b ${BAM} `seq 1 22 | sed 's/^/chr/' | tr '\n' ' '` > tmp.bam
 	    samtools index tmp.bam
 	    /opt/dev/alfred/bin/alfred split -r ${HG} -s blood -v split_${TYPE}/blood.phased.bcf -p split_${TYPE}/${ID}.h1.bam -q split_${TYPE}/${ID}.h2.bam tmp.bam
