@@ -7,7 +7,9 @@ This repository contains the genomic analysis scripts.
 To create a conda environment with the required tools just use
 
 `git clone https://github.com/PMBio/mb-nanopore-2022.git`
+
 `cd mb-nanopore-2022/genomics/`
+
 `make all`
 
 ## Downloading and preparing reference files
