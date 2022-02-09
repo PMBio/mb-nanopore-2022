@@ -9,7 +9,7 @@ source activate assembly
 HG=${BASEDIR}/../genome/Homo_sapiens.GRCh38.dna.primary_assembly.fa
 THREADS=8
 
-if [ -f blood.phased.bcf ]
+if [ -f ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf ]
 then
     # Collect reads
     /opt/dev/lorax/bin/lorax amplicon -o tumor.fa.gz -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Primary_tumor.bam
