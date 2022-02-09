@@ -15,7 +15,7 @@ then
     /opt/dev/lorax/bin/lorax amplicon -o tumor.fa.gz -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Primary_tumor.bam
     /opt/dev/lorax/bin/lorax amplicon -o relapse.fa.gz -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Primary_tumor.bam
     zcat tumor.fa.gz relapse.fa.gz > in.fa
-    rm tumor.fa.gz
+    rm tumor.fa.gz relapse.fa.gz
 
     # Assemble
     wtdbg2 -x ont -g 2m -i in.fa -t ${THREADS} -fo dbg
