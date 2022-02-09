@@ -12,8 +12,8 @@ THREADS=8
 if [ -f ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf ]
 then
     # Collect reads
-    /opt/dev/lorax/bin/lorax amplicon -o tumor.fa.gz -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Primary_tumor.bam
-    /opt/dev/lorax/bin/lorax amplicon -o relapse.fa.gz -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Primary_tumor.bam
+    /opt/dev/lorax/bin/lorax amplicon -o tumor -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Primary_tumor.bam
+    /opt/dev/lorax/bin/lorax amplicon -o relapse -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Primary_tumor.bam
     zcat tumor.fa.gz relapse.fa.gz > in.fa
     rm tumor.fa.gz relapse.fa.gz
 
