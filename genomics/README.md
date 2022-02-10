@@ -1,6 +1,6 @@
-# Genomics analysis code
+# Genome analysis code
 
-This repository contains the genomic analysis scripts.
+This repository contains the genome analysis scripts. Associated tools are available in the [lorax](https://github.com/tobiasrausch/lorax) and [rayas](https://github.com/tobiasrausch/rayas) GitHub repositories.
 
 ## Installation
 

@@ -13,7 +13,7 @@ then
     if [ ! -d ${BASEDIR}/bwa.kit ]
     then
 	cd ${BASEDIR}
-	wget -O- http://sourceforge.net/projects/bio-bwa/files/bwakit/bwakit-0.7.12_x64-linux.tar.bz2/download > bwakit.tar
+	wget -O- http://sourceforge.net/projects/bio-bwa/files/bwakit/bwakit-0.7.15_x64-linux.tar.bz2/download > bwakit.tar
 	tar -xf bwakit.tar
 	rm bwakit.tar
     fi
