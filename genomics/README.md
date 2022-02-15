@@ -102,9 +102,11 @@ To compute the overlap between long-read and short-read predictions
 
 `cd tithreads/analysis/overlap_ont_illumina/ && ./overlap.sh`
 
-Various plotting scripts for self-alignments and alignments against templated insertion source sequences for selected long reads
+Various plotting scripts for self-alignments and alignments against templated insertion source sequences for selected long reads using [wally](https://github.com/tobiasrausch/wally) and custom pipelines.
 
 `cd tithreads/analysis/plotting/ && ./run.sh`
+
+`cd tithreads/analysis/longreads/ && ./run.sh`
 
 Enrichment/depletion analysis with respect to annotated repeats
 
