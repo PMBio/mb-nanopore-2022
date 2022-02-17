@@ -38,3 +38,10 @@ do
     fi		
     echo -e "${TYPE}\t${INST}\t${NUM}" >> stats.tsv
 done
+
+# Plotting
+cat tumor.bed | awk '$8==1' | cut -f 4,9 | sed -e '1s/^/graph {\n/' | sed -e '$a}' | sed 's/label/fontsize=28,label/g' > out.dot
+dot -Tpdf out.dot -o instance1.pdf
+cat tumor.bed | awk '$8==16' | cut -f 4,9 | sed -e '1s/^/graph {\n/' | sed -e '$a}' | sed 's/label/fontsize=28,label/g' > out.dot
+dot -Tpdf out.dot -o instance2.pdf 
+
