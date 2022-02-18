@@ -88,6 +88,10 @@ For the short-read data, [alfred](https://github.com/tobiasrausch/alfred) comput
 
 `cd telomere/illumina/ && ./telomere.sh`
 
+Alignment plots can be generated using [wally](https://github.com/tobiasrausch/wally) and custom scripts.
+
+`cd telomere/ont/ && ./plotting.sh`
+
 ## Templated insertion threads
 
 For the long-read data, [lorax](https://github.com/tobiasrausch/lorax) can be used to call templated insertion threads
