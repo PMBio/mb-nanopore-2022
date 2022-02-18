@@ -16,3 +16,6 @@ echo -e "f60d5507-ab9b-4617-a08f-a93b5639e80a\nfd080231-152f-4557-b45c-b3ebfd941
 
 # Plot
 wally matches -s -R reads.lst -g ${HG} ${BASEDIR}/../../../alignment/ont/Primary_tumor.bam
+
+# Reduce to high-copy regions
+#wally matches -s -n 1000 -x 800 -y 10 -m 10 -R reads.lst -g ${HG} ${BASEDIR}/../../../alignment/ont/Primary_tumor.bam
