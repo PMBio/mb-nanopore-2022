@@ -29,3 +29,4 @@ do
 	rm assembly.bam assembly.bam.bai
     fi
 done
+

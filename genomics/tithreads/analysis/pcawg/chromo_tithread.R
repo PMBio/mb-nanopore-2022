@@ -38,6 +38,7 @@ print(summary(model))
 
 
 png("dist.png", height=800, width=1200)
+#pdf("pcawg.pdf", height=8, width=12)
 p = ggplot(data=x, aes(x=histology_abbreviation))
 p = p + geom_bar(aes(fill=combined))
 p = p + xlab("Tumor histology")
