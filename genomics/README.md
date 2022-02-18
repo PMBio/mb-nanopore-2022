@@ -64,7 +64,7 @@ For the short-read data we applied [delly](https://github.com/dellytools/delly) 
 
 `cd sv/illumina/ && ./delly.sh`
 
-For the long read data we applied multiple methods
+For the long read data we applied multiple methods, including [Sniffles](https://github.com/fritzsedlazeck/Sniffles), [Nanovar](https://github.com/benoukraflab/nanovar) and [delly](https://github.com/dellytools/delly).
 
 `cd sv/ont/ && ./sv.sh`
 
