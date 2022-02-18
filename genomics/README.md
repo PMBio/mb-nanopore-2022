@@ -126,3 +126,8 @@ Using phased germline variants and amplicon regions from a somatic copy-number a
 
 `cd targeted_assembly/ && ./assemble.sh`
 
+## Associated standalone tools
+
+* [Lorax](https://github.com/tobiasrausch/lorax)
+* [Rayas](https://github.com/tobiasrausch/rayas)
+* [Wally](https://github.com/tobiasrausch/wally)

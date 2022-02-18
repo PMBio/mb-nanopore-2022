@@ -1,8 +1,8 @@
-# Medulloblastoma Nanopore 2022
+# Nanopore sequencing of medulloblastoma, data analysis code
 
-Analysis code for preprint
+This repository contains the analysis code for the preprint
 
-[TODO: author list], 2022. Nanopore sequencing of medulloblastoma reveals novel somatic rearrangement patterns and epigenetic signatures, boiRxiv doi: [TODO] 
+[TODO: author list], 2022. Nanopore sequencing of medulloblastoma reveals complex somatic rearrangement patterns and epigenetic signatures, boiRxiv doi: [TODO] 
 
 # Project structure
 
@@ -12,5 +12,4 @@ Analysis code for preprint
 
 # Data
 
-[TODO: describe and/or link out to data]
-
+Associated sequencing data have been deposited at the European Genome-phenome Archive under the accession number EGAS00001005410.
