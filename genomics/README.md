@@ -52,7 +52,7 @@ SNVs and InDel calling using short-read data.
 
 ## Phasing of single-nucleotide variants
 
-Assuming low to moderate long-read coverage, haplotyping is implemented as a two-step process using (1) [whatshap](https://whatshap.readthedocs.io/) to compute initial haplotype blocks based on long-reads and (2) [shapeit](https://odelaneau.github.io/shapeit4/) to scaffold haplotype blocks using the 1000 Genomes reference panel. For regions in the tumor genome that deviate from the expected 1:1 haplotype ratio we implemented a somatic copy-number aware switch-error correction algorithm to correct these switch errors. The pipeline can be run using
+Assuming low to moderate long-read coverage, haplotyping is implemented as a three-step process using (1) [whatshap](https://whatshap.readthedocs.io/) to compute initial haplotype blocks based on long-reads and (2) [shapeit](https://odelaneau.github.io/shapeit4/) to scaffold haplotype blocks using the 1000 Genomes reference panel. (3) For regions in the tumor genome that deviate from the expected 1:1 haplotype ratio we implemented a somatic copy-number aware switch-error correction algorithm to correct these switch errors. The pipeline can be run using
 
 `cd phasing/ && ./phase.sh`
 
