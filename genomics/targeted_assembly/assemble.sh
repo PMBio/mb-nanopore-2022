@@ -12,10 +12,12 @@ THREADS=8
 if [ -f ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf ]
 then
     # Collect reads
-    /opt/dev/lorax/bin/lorax amplicon -o tumor -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Primary_tumor.bam
-    /opt/dev/lorax/bin/lorax amplicon -o relapse -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Relapse.bam
+    /opt/dev/lorax/src/lorax amplicon -o tumor -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Primary_tumor.bam
+    /opt/dev/lorax/src/lorax amplicon -o relapse -g ${HG} -s blood -v ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf -b amplicons.bed ${BASEDIR}/../alignment/ont/Relapse.bam
+    /opt/dev/lorax/src/lorax extract -a -o tumor.match.gz -f tumor.fa.gz -g ${HG} -r tumor.reads ${BASEDIR}/../alignment/ont/Primary_tumor.bam
+    /opt/dev/lorax/src/lorax extract -a -o relapse.match.gz -f relapse.fa.gz -g ${HG} -r relapse.reads ${BASEDIR}/../alignment/ont/Relapse.bam
     zcat tumor.fa.gz relapse.fa.gz > in.fa
-    rm tumor.fa.gz relapse.fa.gz
+    rm relapse.* tumor.*
 
     # Assemble
     wtdbg2 -x ont -g 2m -i in.fa -t ${THREADS} -fo dbg
