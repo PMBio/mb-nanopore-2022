@@ -6,8 +6,6 @@ export PATH=${BASEDIR}/../conda/bin:${PATH}
 
 source activate phasing
 
-HG=${BASEDIR}/../genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
-
 ISFILE=${BASEDIR}/../snv/illumina/freebayes.vcf.gz
 PHASEFILE=${1}
 

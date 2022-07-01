@@ -6,7 +6,7 @@ export PATH=${BASEDIR}/../conda/bin:${PATH}
 
 source activate phasing
 
-HG=${BASEDIR}/../genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
+HG=${BASEDIR}/../genome/hg38.fa
 
 for TYPE in rephase final
 do

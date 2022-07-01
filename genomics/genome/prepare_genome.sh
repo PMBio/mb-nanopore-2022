@@ -4,19 +4,19 @@ SCRIPT=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT")
 export PATH=${BASEDIR}/../conda/bin:${PATH}
 
-# GRCh38 primary assembly used for ONT mapping
-wget http://ftp.ensembl.org/pub/release-105/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-zcat Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz | sed 's/^>/>chr/' > Homo_sapiens.GRCh38.dna.primary_assembly.fa
-samtools faidx Homo_sapiens.GRCh38.dna.primary_assembly.fa
-rm Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-
-# GRCh38 with decoy sequences for Illumina mapping
-wget http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
-samtools faidx GRCh38_full_analysis_set_plus_decoy_hla.fa
-bwa index GRCh38_full_analysis_set_plus_decoy_hla.fa
+# GRCh38
+wget ftp://ftp-trace.ncbi.nlm.nih.gov/ReferenceSamples/giab/release/references/GRCh38/GCA_000001405.15_GRCh38_no_alt_analysis_set_maskedGRC_exclusions_v2.fasta.gz
+zcat GCA_000001405.15_GRCh38_no_alt_analysis_set_maskedGRC_exclusions_v2.fasta.gz > hg38.fa
+samtools faidx hg38.fa
+rm GCA_000001405.15_GRCh38_no_alt_analysis_set_maskedGRC_exclusions_v2.fasta.gz
 
 # Telomere-to-telomere assembly (T2T)
-wget https://s3-us-west-2.amazonaws.com/human-pangenomics/T2T/CHM13/assemblies/chm13.draft_v1.1.fasta.gz
-gunzip chm13.draft_v1.1.fasta.gz
-samtools faidx chm13.draft_v1.1.fasta
+wget https://s3-us-west-2.amazonaws.com/human-pangenomics/T2T/CHM13/assemblies/analysis_set/chm13v2.0_maskedY_rCRS.fa.gz
+zcat chm13v2.0_maskedY_rCRS.fa.gz > t2t.fa
+samtools faidx t2t.fa
+rm chm13v2.0_maskedY_rCRS.fa.gz
+
+# Index
+bwa index hg38.fa
+bwa index t2t.fa
 

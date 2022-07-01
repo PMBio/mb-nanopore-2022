@@ -6,7 +6,7 @@ export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
 source activate align
 
-HG=${BASEDIR}/../../genome/Homo_sapiens.GRCh38.dna.primary_assembly.fa
+HG=${BASEDIR}/../../genome/hg38.fa
 
 for BAM in ${BASEDIR}/../../alignment/ont/*.bam
 do

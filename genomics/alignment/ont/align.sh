@@ -6,7 +6,7 @@ export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
 source activate align
 
-HG=${BASEDIR}/../../genome/Homo_sapiens.GRCh38.dna.primary_assembly.fa
+HG=${BASEDIR}/../../genome/hg38.fa
 if [ -f ${HG} ]
 then
     cd ${BASEDIR}
@@ -16,7 +16,7 @@ then
 	then
 	    ID=`echo ${F} | sed 's/^.*\///' | sed 's/.fastq.gz$//'`
 	    echo ${ID}
-	    minimap2 -t 6 -a -L -x map-ont -L ${HG} ${F} | samtools sort -o ${ID}.bam
+	    minimap2 -t 6 -a -x map-ont -L ${HG} ${F} | samtools sort -o ${ID}.bam
 	    samtools index ${ID}.bam
 	fi
     done

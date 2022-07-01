@@ -6,7 +6,7 @@ export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
 source activate variants
 
-HG=${BASEDIR}/../../genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
+HG=${BASEDIR}/../../genome/hg38.fa
 
 # Bi-allelic variants
 bcftools view -s blood -m 2 -M 2 --min-ac 1 freebayes.vcf.gz | grep -v -P "\t\./1:" | bcftools norm -f ${HG} -m -both - | bgzip > fb.vcf.gz
