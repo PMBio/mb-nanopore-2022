@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 # Targets
-TARGETS = .conda .mamba .align .variants .phasing .assembly .telomere .templins .visualization
+TARGETS = .conda .mamba .align .variants .phasing .assembly .svintegration .telomere .templins .visualization
 PBASE=$(shell pwd)
 
 all:   	$(TARGETS)
@@ -16,13 +16,16 @@ all:   	$(TARGETS)
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n align samtools bcftools htslib bwa minimap2 alfred && touch .align
 
 .variants: .conda .mamba
-	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n variants samtools bcftools htslib delly sniffles freebayes && touch .variants
+	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n variants samtools bcftools htslib freebayes && touch .variants
 
 .phasing: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n phasing samtools bcftools htslib whatshap cyvcf2 && source activate phasing && pip install cyvcf2 && touch .phasing
 
 .assembly: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n assembly samtools bcftools htslib wtdbg mummer minimap2 alfred && touch .assembly
+
+.svintegration: .conda .mamba
+	export PATH=${PBASE}/conda/bin:${PATH} && mamba create -y -c conda-forge -c bioconda -n truvari bcftools samtools delly sniffles && source activate truvari && python3 -m pip install Truvari && touch .svintegration
 
 .telomere: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n telomere samtools htslib minimap2 alfred && touch .telomere

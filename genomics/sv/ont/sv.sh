@@ -4,13 +4,13 @@ SCRIPT=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT")
 export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
-source activate variants
+source activate truvari
 
 HG=${BASEDIR}/../../genome/hg38.fa
 
 # Joint calling with delly
-/opt/dev/delly/bin/delly lr -y ont -g ${HG} -o combined.bcf ${BASEDIR}/../../alignment/ont/*.bam
-/opt/dev/delly/src/delly filter -f somatic -o filtered.bcf -s samples.tsv combined.bcf
+/opt/dev/delly/bin/delly lr -y ont -g ${HG} -o delly.bcf ${BASEDIR}/../../alignment/ont/*.bam
+/opt/dev/delly/src/delly filter -f somatic -o somatic.delly.bcf -s samples.tsv delly.bcf
 
 # By sample with sniffles
 for BAM in ${BASEDIR}/../../alignment/ont/*.bam
@@ -21,11 +21,12 @@ do
 	ID=`echo ${BAM} | sed 's/^.*\///' | sed 's/.bam$//'`
 	echo ${ID}
 	# Sniffles
-	samtools calmd -b ${BAM} ${HG} > tmp.bam 2> /dev/null
-	samtools index tmp.bam
-	sniffles -m tmp.bam -v ${ID}.vcf
-	cat ${ID}.vcf | grep -v "STRANDBIAS" | bcftools sort -O b -o ${ID}.bcf -
-	bcftools index ${ID}.bcf
-	rm ${ID}.vcf tmp.bam*
+	sniffles --reference ${HG} --input ${BAM} --snf ${ID}.snf --reference ${HG}
     fi
 done
+
+# Combine
+sniffles --input Germline.snf Primary_tumor.snf Relapse.snf --reference ${HG} --vcf sniffles.vcf
+bgzip sniffles.vcf
+tabix sniffles.vcf.gz
+rm Germline.snf Primary_tumor.snf Relapse.snf

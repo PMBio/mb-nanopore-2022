@@ -8,6 +8,7 @@
 .telomere
 .templins
 .visualization
+.svintegration
 conda/
 genome/
 fastq/
