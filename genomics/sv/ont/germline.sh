@@ -14,7 +14,7 @@ tabix delly.germ.vcf.gz
 bcftools view -s Germline --min-ac 1 sniffles.vcf.gz | bgzip > sniffles.germ.vcf.gz
 tabix sniffles.germ.vcf.gz
 
-# Comparison of calls >=30bp
+# Comparison of calls
 rm -rf germ_stats/
 truvari bench -p 0 --gtcom --passonly --no-ref a -r 1000 -C 1000 -b delly.germ.vcf.gz -c sniffles.germ.vcf.gz -f ${BASEDIR}/../../genome/hg38.fa -o germ_stats
 rm delly.germ.vcf.gz* sniffles.germ.vcf.gz*
