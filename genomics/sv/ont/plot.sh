@@ -4,7 +4,7 @@ SCRIPT=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT")
 export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
-source activate variants
+source activate truvari
 
 HG=${BASEDIR}/../../genome/hg38.fa
 
@@ -14,3 +14,4 @@ bcftools query -f "%CHROM\t%POS\t%REF\t%ALT\t%ID\t%INFO/SVTYPE\n" germline.bcf |
 
 # Plotting
 Rscript plot.R
+rm size.tsv
