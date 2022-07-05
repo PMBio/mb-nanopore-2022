@@ -9,8 +9,8 @@ source activate truvari
 HG=${BASEDIR}/../../genome/hg38.fa
 
 # Joint calling with delly
-/opt/dev/delly/bin/delly lr -y ont -g ${HG} -o delly.bcf ${BASEDIR}/../../alignment/ont/*.bam
-/opt/dev/delly/src/delly filter -f somatic -o somatic.delly.bcf -s samples.tsv delly.bcf
+delly lr -y ont -g ${HG} -o delly.bcf ${BASEDIR}/../../alignment/ont/*.bam
+delly filter -f somatic -o somatic.delly.bcf -s samples.tsv delly.bcf
 
 # By sample with sniffles
 for BAM in ${BASEDIR}/../../alignment/ont/*.bam
