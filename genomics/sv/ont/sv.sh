@@ -10,7 +10,6 @@ HG=${BASEDIR}/../../genome/hg38.fa
 
 # Joint calling with delly
 delly lr -y ont -g ${HG} -o delly.bcf ${BASEDIR}/../../alignment/ont/*.bam
-delly filter -f somatic -o somatic.delly.bcf -s samples.tsv delly.bcf
 
 # By sample with sniffles
 for BAM in ${BASEDIR}/../../alignment/ont/*.bam

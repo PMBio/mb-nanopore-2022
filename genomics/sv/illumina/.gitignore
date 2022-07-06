@@ -1,2 +1,3 @@
-delly.bcf
-delly.bcf.csi
+delly.bcf*
+tumor.svaba*
+svaba/

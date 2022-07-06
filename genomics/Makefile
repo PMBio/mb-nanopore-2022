@@ -25,7 +25,7 @@ all:   	$(TARGETS)
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n assembly samtools bcftools htslib wtdbg mummer minimap2 alfred && touch .assembly
 
 .svintegration: .conda .mamba
-	export PATH=${PBASE}/conda/bin:${PATH} && mamba create -y -c conda-forge -c bioconda -n truvari bcftools samtools delly sniffles && source activate truvari && python3 -m pip install Truvari && touch .svintegration
+	export PATH=${PBASE}/conda/bin:${PATH} && mamba create -y -c conda-forge -c bioconda -n sv bcftools samtools delly sniffles minimap2 && source activate sv && python3 -m pip install Truvari && git clone https://github.com/davidebolo1993/VISOR.git && cd VISOR && python setup.py install && cd ../ && touch .svintegration
 
 .telomere: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n telomere samtools htslib minimap2 alfred && touch .telomere
