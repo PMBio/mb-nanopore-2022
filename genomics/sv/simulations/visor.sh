@@ -16,7 +16,7 @@ samtools faidx ../../genome/hg38.fa chr18 > chr18.fa
 samtools faidx chr18.fa
 
 # Benchmark SV calling
-echo -e "svtype\tmode\tct\tcoverage\treadlen\trecall\tprecision\tf1\tgtconc\tprecise"
+echo -e "svtype\tmode\tcoverage\treadlen\trecall\tprecision\tf1" > summary.stats.tsv
 SVT=TITHREAD
 for COV in 5 10 20 30 40
 do
@@ -88,6 +88,7 @@ do
 		VISOR LASeR --coverage ${COV} --length_mean ${LEN} --error_model ${MODEL} --qscore_model ${MODEL} --read_type ${RT} -g chr18.fa -s sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/hack_control/ -b sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/simulate.bed -o sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/control  
 	    fi
 	fi
+	
 	# Call SVs
 	if [ ! -f sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results.bed ]
 	then
@@ -100,6 +101,30 @@ do
 		echo ${MODE}
 		#/opt/dev/delly/bin/delly lr -y ${MODE} -o sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.bcf -g data/chr18.fa sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/out/sim.srt.bam
 	    fi
+	fi
+
+	# Evaluation
+	if [ -f sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results.bed ]
+	then
+	    bedtools intersect -a sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.bed -b <(tail -n +2 sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results.bed) -wao | awk '$6!="."' | cut -f 6- | sort -k1,1V -k2,2n | uniq > sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/true_positives.bed
+	    TOTTRUTH=`cat sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.bed | cut -f 1-4 | sort | uniq | wc -l | cut -f 1`
+	    TOTCALLED=`tail -n +2 sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results.bed | cut -f 1-3 | sort | uniq | wc -l | cut -f 1`
+	    TP=`cut -f 1-3 sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/true_positives.bed | sort | uniq | wc -l | cut -f 1`
+	    RECALL=`echo "${TP} / ${TOTTRUTH}" | bc -l`
+	    PREC=0
+	    if [ ${TOTCALLED} -gt 0 ]
+	    then
+		PREC=`echo "${TP} / ${TOTCALLED}" | bc -l`
+	    fi
+	    F1=0
+	    if [ ${RECALL} != "0" ]
+	    then
+		if [ ${PREC} != "0" ]
+		then
+		    F1=`echo "2 * (${RECALL} * ${PREC}) / (${RECALL} + ${PREC})" | bc -l`
+		fi
+	    fi
+	    echo -e "${SVT}\t${MODE}\t${COV}\t${LEN}\t${RECALL}\t${PREC}\t${F1}" >> summary.stats.tsv
 	fi
     done
 done
