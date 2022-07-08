@@ -128,3 +128,7 @@ do
 	fi
     done
 done
+rm chr18.fa*
+
+# PLot
+Rscript plot.R
