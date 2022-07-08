@@ -12,7 +12,7 @@ x=read.table("size.tsv", header=F)
 colnames(x)=c('chrom', 'pos', 'end', 'id', 'type', 'size', 'tech')
 small = x[x$size>-1000 & x$size<1000,]
 
-png("small.png", width=1200, height=600)
+png("ont_ill_deletions.png", width=1200, height=600)
 p = ggplot(data=small, aes(x=size))
 p = p + geom_freqpoly(aes(group=tech, color=tech), bins=100)
 p = p + xlab("Deletion size") + ylab("Number of ascertained deletions")
