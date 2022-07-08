@@ -4,7 +4,7 @@ SCRIPT=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT")
 export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
-source activate truvari
+source activate sv
 
 # Delly
 bcftools view -s Germline --min-ac 1 delly.bcf | bgzip > delly.germ.vcf.gz

@@ -4,7 +4,7 @@ SCRIPT=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT")
 export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
-source activate truvari
+source activate sv
 
 HG=${BASEDIR}/../../genome/hg38.fa
 

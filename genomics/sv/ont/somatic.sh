@@ -4,7 +4,7 @@ SCRIPT=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT")
 export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
-source activate truvari
+source activate sv
 
 # Delly, somatic filtering (tumor and relapse)
 delly filter -f somatic -o somatic.delly.bcf -s samples.tsv delly.bcf
