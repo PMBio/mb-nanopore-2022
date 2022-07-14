@@ -16,7 +16,7 @@ tabix sniffles.germ.vcf.gz
 
 # Comparison of calls
 rm -rf germ_stats/
-truvari bench -p 0 --gtcom --passonly --no-ref a -r 1000 -C 1000 -b delly.germ.vcf.gz -c sniffles.germ.vcf.gz -f ${BASEDIR}/../../genome/hg38.fa -o germ_stats
+truvari bench -p 0 --gtcom --passonly --no-ref a -b delly.germ.vcf.gz -c sniffles.germ.vcf.gz -f ${BASEDIR}/../../genome/hg38.fa -o germ_stats
 rm delly.germ.vcf.gz* sniffles.germ.vcf.gz*
 
 # Fetch consensus variants
@@ -26,3 +26,9 @@ bcftools view -O b -o germline.bcf germline.vcf.gz chr1 chr2 chr3 chr4 chr5 chr6
 bcftools index germline.bcf
 rm germline.vcf.gz*
 rm -rf germ_stats/
+
+# Plotting
+bcftools query -f "%CHROM\t%POS\t%INFO/END\t%ID\t%INFO/SVTYPE\n" germline.bcf | grep "DEL$" | awk '{print $0"\t"(($3-$2) * -1);}' | cut -f 1,2,4,5,6 > size.tsv
+bcftools query -f "%CHROM\t%POS\t%REF\t%ALT\t%ID\t%INFO/SVTYPE\n" germline.bcf | grep "INS$" | awk '{print $0"\t"(length($4) - length($3));}' | cut -f 1,2,5,6,7 >> size.tsv
+Rscript plot.R
+rm size.tsv

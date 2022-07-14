@@ -25,7 +25,7 @@ do
 done
 
 # Combine
-sniffles --input Germline.snf Primary_tumor.snf Relapse.snf --reference ${HG} --vcf sniffles.vcf
+sniffles --input Germline.snf Primary.snf Relapse.snf --reference ${HG} --vcf sniffles.vcf
 bgzip sniffles.vcf
 tabix sniffles.vcf.gz
-rm Germline.snf Primary_tumor.snf Relapse.snf
+rm Germline.snf Primary.snf Relapse.snf

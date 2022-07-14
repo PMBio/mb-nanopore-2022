@@ -6,7 +6,7 @@ export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
 source activate variants
 
-HG=${BASEDIR}/../../genome/Homo_sapiens.GRCh38.dna.primary_assembly.fa
+HG=${BASEDIR}/../../genome/hg38.fa
 
 for BAM in ${BASEDIR}/../../alignment/ont/*.bam
 do
@@ -15,7 +15,7 @@ do
 	ID=`echo ${BAM} | sed 's/^.*\///' | sed 's/.bam$//'`
 	if [ ${ID} == "Germline" ]; then continue; fi
 	echo ${ID}
-	#/opt/dev/lorax/src/lorax tithreads -e -o ${ID} -g ${HG} -m ${BASEDIR}/../../alignment/ont/Germline.bam ${BAM}
+	/opt/dev/lorax/src/lorax tithreads -o ${ID} -g ${HG} -m ${BASEDIR}/../../alignment/ont/Germline.bam ${BAM}
     fi
 done
 

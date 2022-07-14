@@ -2,4 +2,5 @@
 *.vcf.gz.tbi
 *.bcf
 *.bcf.csi
+*.png
 split_*/
