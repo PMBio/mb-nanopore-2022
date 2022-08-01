@@ -22,7 +22,7 @@ then
 	    else
 		samtools view ${ALIGN} chr16:63892950-63893800 chr16:57105500-57105800 | cut -f 1 | sort | uniq -d > reads
 	    fi
-	    /opt/dev/wally/src/wally dotplot -g ${HG} -R reads -s 13000 ${ALIGN}
+	    wally dotplot -g ${HG} -R reads -s 13000 ${ALIGN}
 	    rm reads
 	fi
     done
