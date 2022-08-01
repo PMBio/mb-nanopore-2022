@@ -1,2 +1,3 @@
 nextflow
 *.fq.gz
+ecDNA/
