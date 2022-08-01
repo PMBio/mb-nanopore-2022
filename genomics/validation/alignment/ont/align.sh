@@ -2,11 +2,11 @@
 
 SCRIPT=$(readlink -f "$0")
 BASEDIR=$(dirname "$SCRIPT")
-export PATH=${BASEDIR}/../../conda/bin:${PATH}
+export PATH=${BASEDIR}/../../../conda/bin:${PATH}
 
 source activate align
 
-HG=${BASEDIR}/../../genome/hg38.fa
+HG=${BASEDIR}/../../../genome/hg38.fa
 if [ -f ${HG} ]
 then
     cd ${BASEDIR}
