@@ -13,6 +13,10 @@ do
     if [ -f ${BAM} ]
     then
 	ID=`echo ${BAM} | sed 's/^.*\///' | sed 's/.bam$//'`
-	alfred qc -r ${HG} -j ${ID}.json.gz -o ${ID}.tsv.gz ${BAM}
+	if [ ! -f ${ID}.json.gz ]
+	then
+	    echo ${ID}
+	    alfred qc -r ${HG} -j ${ID}.json.gz -o ${ID}.tsv.gz ${BAM}
+	fi
     fi
 done
