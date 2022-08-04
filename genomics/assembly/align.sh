@@ -15,5 +15,8 @@ then
 	# Against hg38
 	minimap2 -t 6 -a -x asm5 -L ${HG} primary/assembly.fasta | samtools sort -o ${ID}.hg38.bam
 	samtools index ${ID}.hg38.bam
+
+	# Matches
+	alfred bam2match -r ${HG} -o ${ID}.hg38.match.gz ${ID}.hg38.bam
     fi
 fi
