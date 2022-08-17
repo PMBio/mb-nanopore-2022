@@ -15,13 +15,13 @@ do
 	ID=`echo ${BAM} | sed 's/^.*\///' | sed 's/.bam$//'`
 	if [ ${ID} == "Germline" ]; then continue; fi
 	echo ${ID}
-	/opt/dev/lorax/src/lorax tithreads -o ${ID} -g ${HG} -m ${BASEDIR}/../../alignment/ont/Germline.bam ${BAM}
+	lorax tithreads -o ${ID} -g ${HG} -m ${BASEDIR}/../../alignment/ont/Germline.bam ${BAM}
     fi
 done
 
 # Filter for self-concatenation and high copy-number
 echo -e "sample\tinstances\tloci" > stats.tsv
-for TYPE in Primary_tumor Relapse
+for TYPE in Primary Relapse
 do
     INST=`tail -n +2 ${TYPE}.bed | awk '$5>=3 && $6>=50 && $7>=10' | cut -f 8 | sort | uniq  | wc -l | cut -f 1`
     NUM=0

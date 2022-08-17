@@ -21,7 +21,7 @@ SVT=TITHREAD
 for COV in 5 10 20 30 40
 do
     #pb ont
-    for MODE in ill 
+    for MODE in ill pb ont
     do
 	LEN=150
 	if [ ${MODE} == "ont" ]
