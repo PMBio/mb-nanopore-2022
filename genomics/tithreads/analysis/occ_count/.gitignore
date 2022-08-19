@@ -1,0 +1,5 @@
+contig.bam
+contig.bam.bai
+contig.hg38.match.gz
+occ_count.png
+segment.counts.cov.bed
