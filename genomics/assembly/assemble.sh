@@ -57,3 +57,11 @@ then
     samtools index -@ 4 assembly_lr_mapping.shasta.bam
 fi
 
+# Copy-number calling
+if [ ! -f assembly_lr_mapping.shasta.cov.gz ]
+then
+    cat ShastaRun/Assembly.fasta | tr 'ACGT' 'CCCC' | bgzip > map.fa.gz
+    samtools faidx map.fa.gz
+    delly cnv -g ShastaRun/Assembly.fasta -m map.fa.gz -o assembly_lr_mapping.shasta.bcf -c assembly_lr_mapping.shasta.cov.gz assembly_lr_mapping.shasta.bam
+    rm map.fa.gz* assembly_lr_mapping.shasta.bcf
+fi
