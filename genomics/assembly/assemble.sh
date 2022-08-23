@@ -65,3 +65,17 @@ then
     delly cnv -g ShastaRun/Assembly.fasta -m map.fa.gz -o assembly_lr_mapping.shasta.bcf -c assembly_lr_mapping.shasta.cov.gz assembly_lr_mapping.shasta.bam
     rm map.fa.gz* assembly_lr_mapping.shasta.bcf
 fi
+
+# Align SvAba contigs
+if [ ! -f assembly_lr_mapping.shasta.svaba.contigs.bam ]
+then
+    samtools fastq ../sv/illumina/tumor.svaba.contigs.bam  > svaba.contigs.fq
+    minimap2 -ax map-ont -t ${THREADS} ShastaRun/Assembly.fasta svaba.contigs.fq | samtools sort -@ 4 -m 4G > assembly_lr_mapping.shasta.svaba.contigs.bam
+    samtools index assembly_lr_mapping.shasta.svaba.contigs.bam
+    rm svaba.contigs.fq
+
+    # plot matches
+    samtools view assembly_lr_mapping.shasta.svaba.contigs.bam 9046 | cut -f 1 | sort | uniq > reads
+    wally matches -p -g ${HG} -R reads  ../sv/illumina/tumor.svaba.contigs.bam
+    rm reads
+fi
