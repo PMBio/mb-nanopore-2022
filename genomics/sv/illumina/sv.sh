@@ -23,7 +23,7 @@ fi
 # Manta
 ./manta-1.6.0.centos6_x86_64/bin/configManta.py --bam ${BASEDIR}/../../alignment/illumina/blood.bam --referenceFasta ${HG} --runDir manta.germline
 ./manta.germline/runWorkflow.py -j 8
-for SAMPLE in relapse
+for SAMPLE in tumor relapse
 do
     ./manta-1.6.0.centos6_x86_64/bin/configManta.py --normalBam ${BASEDIR}/../../alignment/illumina/blood.bam --tumorBam ${BASEDIR}/../../alignment/illumina/${SAMPLE}.bam --referenceFasta ${HG} --runDir manta.${SAMPLE}
     ./manta.${SAMPLE}/runWorkflow.py -j 8
