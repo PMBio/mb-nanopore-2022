@@ -6,7 +6,7 @@ export PATH=${BASEDIR}/../../conda/bin:${PATH}
 
 source activate variants
 
-HG=${BASEDIR}/../../genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
+HG=${BASEDIR}/../../genome/hg38.fa
 
 # Discovery templated insertions
 for BAM in ${BASEDIR}/../../alignment/illumina/*.bam
@@ -15,7 +15,8 @@ do
     then
 	ID=`echo ${BAM} | sed 's/^.*\///' | sed 's/.bam$//'`
 	if [ ${ID} == "blood" ]; then continue; fi
-	/opt/dev/rayas/src/rayas call -g ${HG} -o ${ID}.bed -m ${BASEDIR}/../../alignment/illumina/blood.bam ${BAM}
+	#/usr/bin/time -v rayas call -g ${HG} -o ${ID}.bed -m ${BASEDIR}/../../alignment/illumina/blood.bam ${BAM} > ${ID}.log 2> ${ID}.err
+	rayas call -g ${HG} -o ${ID}.bed -m ${BASEDIR}/../../alignment/illumina/blood.bam ${BAM}
     fi
 done
 
