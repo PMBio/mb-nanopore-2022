@@ -10,6 +10,7 @@ scienceTheme=theme(panel.grid.major=element_blank(), panel.grid.minor=element_bl
 
 dat = read.table("summary.stats.tsv", header=T)
 dat$coverage = factor(dat$coverage)
+dat$sd = factor(dat$sd)
 
 # F1 score lines
 df = data.frame()
@@ -27,13 +28,13 @@ labels$text = paste0("F1=", labels$f1)
 labels$recall = labels$recall - 0.01
 
 p = ggplot(data=dat, aes(x=precision, y=recall))
-p = p + geom_point(aes(color=coverage))
+p = p + geom_point(aes(shape=coverage, color=sd), size=2)
 p = p + xlim(0,1) + ylim(0,1)
 p = p + geom_line(data=df, aes(x=precision, y=recall, group=f1), color="gray", linetype="dashed")
 p = p + geom_text(data=labels, aes(x=precision, y=recall, label=text), color="darkgray")
 p = p + xlab("Precision")
 p = p + ylab("Recall")
-p = p + labs(color="Coverage")
+p = p + labs(color="Sd", shape="Coverage")
 p = p + scienceTheme
 p
 
