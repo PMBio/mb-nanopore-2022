@@ -18,11 +18,11 @@ samtools faidx chr18.fa
 # Benchmark SV calling
 echo -e "svtype\tmode\tcoverage\treadlen\tsd\trecall\tprecision\tf1" > summary.stats.tsv
 SVT=TITHREAD
-for CONF in 3_0 6_3
+for CONF in 3,0 6,3
 do
-    SD=`echo ${CONF} | sed 's/_.*$//'`
-    SPLIT=`echo ${CONF} | sed 's/^.*_//'`
-    for COV in 5 10 20 30
+    SD=`echo ${CONF} | sed 's/,.*$//'`
+    SPLIT=`echo ${CONF} | sed 's/^.*,//'`
+    for COV in 5 30
     do
 	#pb ont
 	for MODE in ill pb ont
@@ -98,12 +98,13 @@ do
 	    then
 		if [ ${MODE} == "ill" ]
 		then
-		    /opt/dev/rayas/bin/rayas call -d ${SD} -s ${SPLIT} -o sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.bed -g chr18.fa -m sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/control/sim.srt.bam sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/tumor/sim.srt.bam
+		    /opt/dev/rayas/src/rayas call -d ${SD} -s ${SPLIT} -o sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.bed -g chr18.fa -m sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/control/sim.srt.bam sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/tumor/sim.srt.bam
 		    cut -f 4,9 sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.bed | sed -e '1s/^/graph {\n/' | sed -e '$a}' > sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.dot
 		    dot -Tpdf sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.dot -o sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.pdf
 		else
-		    echo ${MODE}
-		    #/opt/dev/delly/bin/delly lr -y ${MODE} -o sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.bcf -g data/chr18.fa sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/out/sim.srt.bam
+		    /opt/dev/lorax/src/lorax tithreads -d ${SD} -s ${SPLIT} -o sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF} -g chr18.fa -m sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/control/sim.srt.bam sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/tumor/sim.srt.bam
+		    cut -f 4,9 sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.bed | sed -e '1s/^/graph {\n/' | sed -e '$a}' > sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.dot
+		    dot -Tpdf sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.dot -o sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.pdf
 		fi
 	    fi
 	    

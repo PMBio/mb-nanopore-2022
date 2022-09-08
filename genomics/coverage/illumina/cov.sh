@@ -15,6 +15,9 @@ do
     then
 	ID=`echo ${BAM} | sed 's/^.*\///' | sed 's/.bam$//'`
 	echo ${ID}
+	# Adaptive windows
 	delly cnv -a -g ${HG} -m ${MAP} -c ${ID}.cov.gz -o ${ID}.bcf ${BAM}
+	# Fixed windows
+	#delly cnv -g ${HG} -m ${MAP} -c ${ID}.cov.gz -o ${ID}.bcf ${BAM}
     fi
 done

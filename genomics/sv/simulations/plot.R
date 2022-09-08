@@ -26,6 +26,7 @@ df$f1 = factor(df$f1, levels=c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9))
 labels = df[df$precision == 1,]
 labels$text = paste0("F1=", labels$f1)
 labels$recall = labels$recall - 0.01
+labels$precision = labels$precision - 0.01
 
 p = ggplot(data=dat, aes(x=precision, y=recall))
 p = p + geom_point(aes(shape=coverage, color=sd), size=2)
@@ -34,7 +35,7 @@ p = p + geom_line(data=df, aes(x=precision, y=recall, group=f1), color="gray", l
 p = p + geom_text(data=labels, aes(x=precision, y=recall, label=text), color="darkgray")
 p = p + xlab("Precision")
 p = p + ylab("Recall")
-p = p + labs(color="Sd", shape="Coverage")
+p = p + labs(color="Parameters", shape="Coverage")
 p = p + scienceTheme
 p
 
