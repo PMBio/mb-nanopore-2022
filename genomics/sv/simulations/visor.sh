@@ -8,24 +8,24 @@ source activate sv
 
 HG=${BASEDIR}/../../genome/hg38.fa
 NTITHREADS=10
-NSOURCES=3
-NSEGMENTS=100
+NSOURCES=5
+NSEGMENTS=50
 
 # Simulate using chr18
 samtools faidx ../../genome/hg38.fa chr18 > chr18.fa
 samtools faidx chr18.fa
 
 # Benchmark SV calling
-echo -e "svtype\tmode\tcoverage\treadlen\tsd\trecall\tprecision\tf1" > summary.stats.tsv
+echo -e "svtype\tmode\tcoverage\treadlen\tparam\trecall\tprecision\tf1" > summary.stats.tsv
 SVT=TITHREAD
-for CONF in 3,0 6,3
+for CONF in 3,3 6,3 2,0
 do
     SD=`echo ${CONF} | sed 's/,.*$//'`
     SPLIT=`echo ${CONF} | sed 's/^.*,//'`
-    for COV in 5 30
+    for COV in 5 10 30
     do
 	#pb ont
-	for MODE in ill pb ont
+	for MODE in ont ill pb
 	do
 	    LEN=150
 	    if [ ${MODE} == "ont" ]
@@ -51,6 +51,7 @@ do
 		VISOR HACk -g chr18.fa -b sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.hap1.bed sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.hap2.bed -o sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/hack_control
 		
 		# Simulate haplotypes
+		echo -e "Thread\tSegment\tReverse" > sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.order.bed
 		for J in `seq 1 1 ${NTITHREADS}`
 		do
 		    rm -f templates.fa
@@ -74,6 +75,7 @@ do
 			else
 			    sed "${CHOICE}q;d" templates.fa >> tithread.fa
 			fi
+			echo -e "Thread${J}\tSegment${CHOICE}\t${FLIP}" >> sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.order.bed
 		    done
 		    ST=`echo $(($RANDOM%30000)) | awk '{print ($1*1000 + 50000000);}'`
 		    ED=`expr ${ST} + 1`
@@ -111,7 +113,7 @@ do
 	    # Evaluation
 	    if [ -f sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.bed ]
 	    then
-		bedtools intersect -a sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.bed -b <(tail -n +2 sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.bed) -wao | awk '$6!="."' | cut -f 6- | sort -k1,1V -k2,2n | uniq > sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/true_positives.bed
+		bedtools intersect -a sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.bed -b <(tail -n +2 sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.bed) -wao | awk '$6!="."' | cut -f 1-3 | sort -k1,1V -k2,2n | uniq > sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/true_positives.bed
 		TOTTRUTH=`cat sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/${SVT}.bed | cut -f 1-4 | sort | uniq | wc -l | cut -f 1`
 		TOTCALLED=`tail -n +2 sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/results_${CONF}.bed | cut -f 1-3 | sort | uniq | wc -l | cut -f 1`
 		TP=`cut -f 1-3 sim_svt${SVT}_${MODE}_cov${COV}_len${LEN}/true_positives.bed | sort | uniq | wc -l | cut -f 1`
