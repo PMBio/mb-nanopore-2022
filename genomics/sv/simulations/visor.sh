@@ -25,7 +25,7 @@ do
     for COV in 5 10 30
     do
 	#pb ont
-	for MODE in ont ill pb
+	for MODE in ont pb ill
 	do
 	    LEN=150
 	    if [ ${MODE} == "ont" ]

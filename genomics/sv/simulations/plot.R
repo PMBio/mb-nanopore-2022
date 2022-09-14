@@ -28,6 +28,7 @@ labels$text = paste0("F1=", labels$f1)
 labels$recall = labels$recall - 0.01
 labels$precision = labels$precision - 0.01
 
+png("sim.png", width=800, height=400)
 p = ggplot(data=dat, aes(x=precision, y=recall))
 p = p + geom_point(aes(shape=coverage, color=param), size=2)
 p = p + xlim(0,1) + ylim(0,1)
@@ -37,7 +38,9 @@ p = p + xlab("Precision")
 p = p + ylab("Recall")
 p = p + labs(color="Parameters", shape="Coverage")
 p = p + scienceTheme
+p = p + facet_wrap(. ~ mode)
 p
+dev.off()
 
 
 
