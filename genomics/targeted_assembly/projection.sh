@@ -21,5 +21,9 @@ then
     minimap2 -ax map-ont ${HG} ${INFA} | samtools sort -o assembly.bam -
     samtools index assembly.bam
     alfred bam2match -r ${HG} assembly.bam
-    #rm assembly.bam assembly.bam.bai
+
+    # Chained alignment plot
+    samtools view assembly.bam | cut -f 1 | sort | uniq > reads
+    wally matches -l -n 1000000 -f 0.4 -t 20 -g ${HG} -R reads assembly.bam
+    rm assembly.bam assembly.bam.bai reads
 fi
