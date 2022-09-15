@@ -32,6 +32,10 @@ colnames(cov) = c("chr", "start", "end", "cn")
 snv = read.table(args[2], header=F)
 colnames(snv) = c("chr", "pos", "h1af")
 reg = args[3]
+pbaf = T
+dotcol = "black"
+#dotcol = "#1b9e77"
+#dotcol = "#7570b3"
 
 chrname=unlist(strsplit(reg, ':'))[1]
 interval=unlist(strsplit(reg, ':'))[2]
@@ -79,7 +83,7 @@ for (chrlabel in unique(snv$chr)) {
     h2 = segments.summary(cnaSegments)
     #write.table(h2, file=paste0(idname, ".", chrlabel, ".h2.segment"), sep="\t", quote=FALSE, row.names=FALSE)
 
-    p1 = ggplot(data=df, aes(x=pos, y=signal)) + geom_point(size=0.5, pch=21, fill="black", color="black")
+    p1 = ggplot(data=df, aes(x=pos, y=signal)) + geom_point(size=0.5, pch=21, fill=dotcol, color=dotcol)
     p1 = p1 + xlab(chrlabel) + ylab("Copy-number") + scale_x_continuous(labels=comma, limits=c(minX, maxX))
     p1 = p1 + scienceTheme
 
@@ -89,14 +93,17 @@ for (chrlabel in unique(snv$chr)) {
     #p1 = p1 + geom_segment(x=17208573, xend=17208573, color="#e78ac3", y=svplotpos + 1.5, yend=svplotpos, arrow=arrow(length=unit(0.5, "cm"), type="closed"))
     p1 = p1 + scale_y_continuous(breaks=c(0,1,2,3,4,5,6), limits=c(0,6)) + theme(legend.position="bottom")
     p1 = p1 + theme(axis.text.x = element_text(angle=45, hjust=1))
-    p2 = ggplot(data=snvchr, aes(x=pos, y=h1af)) + geom_jitter(color=gg_color_hue(2)[1], size=0.25, width=0, height=0)
-    p2 = p2 + geom_jitter(data=snvchr, aes(x=pos, y=1-h1af), color=gg_color_hue(2)[2], size=0.25, width=0, height=0)
-    #p2 = p2 + geom_segment(data=h1, aes(x=loc.start, y=seg.median, xend=loc.end, yend=seg.median), colour=gg_color_hue(2)[1], size=0.8)
-    #p2 = p2 + geom_segment(data=h2, aes(x=loc.start, y=seg.median, xend=loc.end, yend=seg.median), colour=gg_color_hue(2)[2], size=0.8)
-    p2 = p2 + xlab(chrlabel) + ylab("Phased het.\nSNV VAF") + scale_x_continuous(labels=comma,limits=c(minX, maxX)) + ylim(0,1)
-    p2 = p2 + scienceTheme
-    p2 = p2 + theme(axis.title.x=element_blank(), axis.line.x=element_blank(), axis.ticks.x=element_blank(), axis.text.x=element_blank())
-    plot_grid(p2, p1, align="v", nrow=2, rel_heights=c(1/3, 2/3))
+
+    if (pbaf) {
+      p2 = ggplot(data=snvchr, aes(x=pos, y=h1af)) + geom_jitter(color=gg_color_hue(2)[1], size=0.25, width=0, height=0)
+      p2 = p2 + geom_jitter(data=snvchr, aes(x=pos, y=1-h1af), color=gg_color_hue(2)[2], size=0.25, width=0, height=0)
+      #p2 = p2 + geom_segment(data=h1, aes(x=loc.start, y=seg.median, xend=loc.end, yend=seg.median), colour=gg_color_hue(2)[1], size=0.8)
+      #p2 = p2 + geom_segment(data=h2, aes(x=loc.start, y=seg.median, xend=loc.end, yend=seg.median), colour=gg_color_hue(2)[2], size=0.8)
+      p2 = p2 + xlab(chrlabel) + ylab("Phased het.\nSNV VAF") + scale_x_continuous(labels=comma,limits=c(minX, maxX)) + ylim(0,1)
+      p2 = p2 + scienceTheme
+      p2 = p2 + theme(axis.title.x=element_blank(), axis.line.x=element_blank(), axis.ticks.x=element_blank(), axis.text.x=element_blank())
+      plot_grid(p2, p1, align="v", nrow=2, rel_heights=c(1/3, 2/3))
+    }
     ggsave(paste0(idname, ".", chrlabel, ".png"), width=6, height=6)
 }
 print(warnings())

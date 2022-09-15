@@ -12,5 +12,5 @@ samtools depth -Q 10 ont/Primary.bam | awk '$3>=5' | wc -l
 # Illumina, primary tumor
 samtools depth -Q 10 illumina/tumor.bam | awk '$3>=5' | wc -l
 
-# Non-N masked
+# Non-N masked, total=2933638686
 faCount ../genome/hg38.fa

@@ -21,5 +21,5 @@ then
     minimap2 -ax map-ont ${HG} ${INFA} | samtools sort -o assembly.bam -
     samtools index assembly.bam
     alfred bam2match -r ${HG} assembly.bam
-    rm assembly.bam assembly.bam.bai
+    #rm assembly.bam assembly.bam.bai
 fi
