@@ -9,6 +9,14 @@ source activate assembly
 HG=${BASEDIR}/../genome/hg38.fa
 THREADS=8
 
+
+# Install Shasta
+if [ ! -f shasta-Linux-0.10.0 ]
+then
+    curl -O -L https://github.com/chanzuckerberg/shasta/releases/download/0.10.0/shasta-Linux-0.10.0
+    chmod ugo+x shasta-Linux-0.10.0
+fi
+
 if [ -f ${BASEDIR}/../phasing/split_rephase/blood.phased.bcf ]
 then
     # Collect reads
@@ -17,18 +25,15 @@ then
     /opt/dev/lorax/src/lorax extract -a -o tumor.match.gz -f tumor.fa.gz -g ${HG} -r tumor.reads ${BASEDIR}/../alignment/ont/Primary.bam
     /opt/dev/lorax/src/lorax extract -a -o relapse.match.gz -f relapse.fa.gz -g ${HG} -r relapse.reads ${BASEDIR}/../alignment/ont/Relapse.bam
     zcat tumor.fa.gz relapse.fa.gz > in.fa
-    #rm relapse.* tumor.*
+    rm relapse.* tumor.*
 
     # Assemble
-    wtdbg2 -x ont -g 2m -i in.fa -t ${THREADS} -fo dbg
-    wtpoa-cns -t ${THREADS} -i dbg.ctg.lay.gz -fo dbg.raw.fa
-    minimap2 -t ${THREADS} -ax map-ont -r 2000 dbg.raw.fa in.fa | samtools sort -@ ${THREADS} > dbg.bam
-    samtools view -F0x900 dbg.bam | wtpoa-cns -t ${THREADS} -d dbg.raw.fa -i - -fo dbg.cns.fa
-    mv dbg.cns.fa assembly.wtdbg2.fa
-    rm -f dbg.* in.fa
-
+    rm -rf ShastaRun
+    ./shasta-Linux-0.10.0 --Reads.minReadLength 3000 --input in.fa --config Nanopore-May2022
+    
     # Align to reference
-    minimap2 -ax map-ont ${HG} assembly.wtdbg2.fa | samtools sort -o assembly.bam -
+    rm -rf assembly.bam assembly.bam.bai match.gz
+    minimap2 -ax map-ont ${HG} ShastaRun/Assembly.fasta | samtools sort -o assembly.bam -
     samtools index assembly.bam
     /opt/dev/alfred/bin/alfred bam2match -r ${HG} assembly.bam
     rm assembly.bam assembly.bam.bai
