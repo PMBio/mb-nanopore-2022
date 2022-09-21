@@ -105,6 +105,7 @@ for (chrlabel in unique(snv$chr)) {
       plot_grid(p2, p1, align="v", nrow=2, rel_heights=c(1/3, 2/3))
     }
     ggsave(paste0(idname, ".", chrlabel, ".png"), width=6, height=6)
+    #ggsave(paste0(idname, ".", chrlabel, ".png"), width=4, height=7)
 }
 print(warnings())
 

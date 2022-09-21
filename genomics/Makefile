@@ -13,7 +13,7 @@ all:   	$(TARGETS)
 	export PATH=${PBASE}/conda/bin:${PATH} && conda install -y -n base -c conda-forge mamba && touch .mamba
 
 .align: .conda .mamba
-	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n align samtools bcftools htslib bwa minimap2 alfred && touch .align
+	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n align samtools bcftools htslib bwa minimap2 alfred nanostat && touch .align
 
 .variants: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n variants samtools bcftools htslib freebayes && touch .variants
