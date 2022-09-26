@@ -15,13 +15,16 @@ do
     then
 	ID=`echo ${BAM} | sed 's/^.*\///' | sed 's/.bam$//'`
 	if [ ${ID} == "blood" ]; then continue; fi
-	#/usr/bin/time -v rayas call -g ${HG} -o ${ID}.bed -m ${BASEDIR}/../../alignment/illumina/blood.bam ${BAM} > ${ID}.log 2> ${ID}.err
-	rayas call -g ${HG} -o ${ID}.bed -m ${BASEDIR}/../../alignment/illumina/blood.bam ${BAM}
+	if [ ! -f ${ID}.bed ]
+	then
+	    rayas call -g ${HG} -o ${ID}.bed -m ${BASEDIR}/../../alignment/illumina/blood.bam ${BAM}
+	fi
     fi
 done
 
 # Filter for self-concatenation and high copy-number
 echo -e "sample\tinstances\tloci" > stats.tsv
+rm -f stats.ti.seglen stats.ti.tsv
 for TYPE in tumor relapse
 do
     INST=`tail -n +2 ${TYPE}.bed | awk '$5>=3 && $6>=50 && $7>=10' | cut -f 8 | sort | uniq  | wc -l | cut -f 1`
@@ -43,6 +46,7 @@ done
 # Plotting
 cat tumor.bed | awk '$8==1' | cut -f 4,9 | sed -e '1s/^/graph {\n/' | sed -e '$a}' | sed 's/label/fontsize=28,label/g' > out.dot
 dot -Tpdf out.dot -o instance1.pdf
+rm out.dot
 cat tumor.bed | awk '$8==16' | cut -f 4,9 | sed -e '1s/^/graph {\n/' | sed -e '$a}' | sed 's/label/fontsize=28,label/g' > out.dot
 dot -Tpdf out.dot -o instance2.pdf 
-
+rm out.dot

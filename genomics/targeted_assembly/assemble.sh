@@ -30,6 +30,7 @@ then
     # Assemble
     rm -rf ShastaRun
     ./shasta-Linux-0.10.0 --Reads.minReadLength 3000 --input in.fa --config Nanopore-May2022
+    rm in.fa
     
     # Align to reference
     rm -rf assembly.bam assembly.bam.bai match.gz
