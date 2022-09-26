@@ -1,4 +1,6 @@
-assembly.wtdbg2.fa
+assembly_contigs.v1.fa
 match.gz
 shasta-Linux-0.10.0
 plots/
+ShastaRun/
+assembly_path.png
