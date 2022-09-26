@@ -1,2 +1,5 @@
 H021*
 Homo_sapiens*
+*.bcf
+*.bcf.csi
+*.cov.gz
