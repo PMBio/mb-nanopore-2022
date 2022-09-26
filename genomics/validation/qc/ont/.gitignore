@@ -1,2 +1,3 @@
 *.json.gz
 *.tsv.gz
+*.nanostat
