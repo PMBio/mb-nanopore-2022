@@ -126,7 +126,6 @@ PCAWG related analysis scripts are available in a separate folder
 
 ## Targeted assembly
 
-[Lorax](https://github.com/tobiasrausch/lorax) can be used to select reads for a targeted amplicon assembly using phased germline variants and amplicon regions from a somatic copy-number alteration analysis (SCNAs) as input. Selected reads can then be used with any long-read assembler, our choice in this project was [wtdbg2](https://github.com/ruanjue/wtdbg2). Lastly, we projected the alignments back to the reference to infer SV breakpoints.
+[Lorax](https://github.com/tobiasrausch/lorax) can be used to select reads for a targeted amplicon assembly using phased germline variants and amplicon regions from a somatic copy-number alteration analysis (SCNAs) as input. Selected reads can then be used with any long-read assembler, our choice in this project was [wtdbg2](https://github.com/ruanjue/wtdbg2), [flye](https://github.com/fenderglass/Flye) and [shasta](https://github.com/chanzuckerberg/shasta). Lastly, we projected the alignments back to the reference to infer SV breakpoints.
 
 `cd targeted_assembly/ && ./assemble.sh`
-
