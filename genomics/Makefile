@@ -16,19 +16,19 @@ all:   	$(TARGETS)
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n align samtools bcftools htslib bwa minimap2 alfred nanostat && touch .align
 
 .variants: .conda .mamba
-	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n variants samtools bcftools htslib freebayes && touch .variants
+	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n variants samtools bcftools htslib freebayes lorax && touch .variants
 
 .phasing: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n phasing samtools bcftools htslib whatshap cyvcf2 && source activate phasing && pip install cyvcf2 && touch .phasing
 
 .assembly: .conda .mamba
-	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n assembly samtools bcftools htslib wtdbg minimap2 alfred flye wally && touch .assembly
+	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n assembly samtools bcftools htslib wtdbg minimap2 alfred flye wally lorax && touch .assembly
 
 .svintegration: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && mamba create -y -c conda-forge -c bioconda -n sv bcftools samtools delly sniffles minimap2 && source activate sv && python3 -m pip install Truvari && git clone https://github.com/davidebolo1993/VISOR.git && cd VISOR && python setup.py install && cd ../ && pip3 install git+https://github.com/rrwick/Badread.git && touch .svintegration
 
 .telomere: .conda .mamba
-	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n telomere samtools htslib minimap2 alfred && touch .telomere
+	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n telomere samtools htslib minimap2 alfred lorax && touch .telomere
 
 .templins: .conda .mamba
 	export PATH=${PBASE}/conda/bin:${PATH} && source activate base && mamba create -y -c conda-forge -c bioconda -n templins samtools htslib minimap2 alfred && touch .templins
