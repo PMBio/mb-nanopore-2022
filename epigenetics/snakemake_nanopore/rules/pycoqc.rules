@@ -1,0 +1,39 @@
+'''
+#############################################################################
+# Use Adrien Ledger's pycoQC to generate quality reports
+#############################################################################
+'''
+
+rule fast5_to_seq_summary:
+    input: os.path.join(basedir,'raw/{sample}/guppy/')
+    output: os.path.join(basedir, 'raw/{sample}/guppy_summary.txt')
+    params:
+        jobname='fast5_to_seq_summary_{sample}',
+        runtime='24:00',
+        memusage='16000',
+        slots='32',
+        misc=''
+    shell: '{Fast5_to_seq_summary} --fast5_dir {input} --seq_summary_fn {output} --threads 32 --basecall_id {basecall_id}'
+
+rule all_fast5_to_seq_summary:
+    input: expand(rules.fast5_to_seq_summary.output, sample=unique_samples)
+
+rule pycoqc_report:
+    input: 
+        summary = rules.fast5_to_seq_summary.output,
+        bams = lambda wildcards: expand(rules.filter_alignment.output.bam, batch=samplebatches(wildcards.sample), sample=wildcards.sample),
+        bais= lambda wildcards: expand(rules.filter_alignment.output.bam + ".bai", batch=samplebatches(wildcards.sample), sample=wildcards.sample)
+    output:
+        os.path.join(basedir, 'report', '{sample}_pycoqc.html')
+    params:
+        jobname='pycoqc_{sample}',
+        runtime='2:00',
+        memusage='16000',
+        slots='1',
+        misc=''
+    shell: '{pycoQC} -f {input.summary} --bam_file {input.bams} --html_outfile {output}'
+
+rule all_pycoqc_report:
+    input: expand(rules.pycoqc_report.output, sample=unique_samples)
+
+

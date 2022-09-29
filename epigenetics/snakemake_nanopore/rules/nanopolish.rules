@@ -1,0 +1,303 @@
+import pandas as pd
+
+from meth5.meth5 import MetH5File
+default_smalljob_params = {"runtime":'4:00', "memusage":'16000', "slots":'2', "misc":''}
+'''
+##############################################################################
+# Methylation calling using nanopolish
+##############################################################################
+'''
+
+'''
+In preparation for nanopolish methylation calling, raw fast5 entries 
+for each read in the fastq files are indexed so they can be accessed more 
+efficiently by nanopolish.
+
+The output files will be created within the fastq directory 
+(with .index.readdb suffix for each fq file) 
+'''
+
+print(os.path.join(basedir, 'fastq/{sample}/{batch}.%s.index.readdb' % fastq_ending))
+
+def map_back_multiplexed(wc, return_summary=True, return_fast5_dir=False):
+    batch = wc["batch"]
+    if batch.startswith("B"):
+        for origin in multiplexed_samples:
+            for bc, sample in multiplexed_samples[origin].items():
+                if sample == wc["sample"]:
+                    if return_summary:
+                        return rules.fast5_to_fastq_multiplexed.output.summary.format(sample=origin, batch=batch)
+                    if return_fast5_dir:
+                        return Path(basedir, "raw", origin, "batched", batch)
+    else:
+        if return_summary:
+            return rules.fast5_to_fastq.output.summary.format(sample=wc["sample"], batch=batch)
+        if return_fast5_dir:
+            return Path(basedir,"raw",wc["sample"],"batched",batch)
+
+rule nanopolish_index:
+    input:
+        summary=map_back_multiplexed,
+        fq=rules.fast5_to_fastq.output.fq
+    output: os.path.join(basedir, 'fastq/{sample}/{batch}.%s.index.readdb' % fastq_ending)
+    params:
+        fast5_dir=lambda wc: map_back_multiplexed(wc, return_summary=False, return_fast5_dir=True),
+        jobname='npidx_{sample}_{batch}',
+        runtime='01:00',
+        memusage='6000',
+        slots='1',
+        misc=''
+    shell: '{nanopolish} index -d {params.fast5_dir} -s {input.summary} {input.fq}'
+
+rule test:
+    input: "/omics/groups/OE0540/internal/projects/chromothripsis_medulloblastoma/ont_analysis/2022_reanalysis/fastq/Germline/B153.fq.index.readdb"
+
+rule all_nanopolish_index:
+    input: expand(os.path.join(basedir, 'fastq', '{sample}', '{batch}.%s.index.readdb' % fastq_ending), zip_combinator, sample=sbf.sb_samples, batch=sbf.sb_batches)
+
+
+'''
+Performs methylation calling using nanopolish for one sample and batch, for
+one type of methylation call (the "mtype" wildcard). The "mtype" wildcard 
+could be one of "cpg", "gpc", or "dam".
+
+The output will be stored in the "met" directory in tsv format.
+'''
+rule metcall:
+    input: 
+        fq=rules.fast5_to_fastq.output.fq,
+        bam=rules.filter_alignment.output.bam,
+        bai=f"{rules.filter_alignment.output.bam}.bai",
+        fqidx=rules.nanopolish_index.output
+    output: os.path.join(basedir, 'met','{sample}','{batch}_met_{mtype}.tsv')
+    params:
+        jobname='metcall_{sample}_{batch}',
+        runtime='16:00',
+        memusage='16000',
+        slots='8',
+        misc=''
+    shell: """
+    echo "{nanopolish} call-methylation -t {params.slots} -g {reference} -b {input.bam} -r {input.fq} -q {wildcards.mtype} > {output}" 
+    {nanopolish} call-methylation -t {params.slots} -g {reference} -b {input.bam} -r {input.fq} -q {wildcards.mtype} > {output}
+    """
+
+rule all_metcall:
+    input: expand(rules.metcall.output, zip2_comb3_combinator, sample=sbf.sb_samples, batch=sbf.sb_batches, mtype=mettypes)
+
+
+rule eventalign:
+    input:
+        fq=rules.fast5_to_fastq.output.fq,
+        bam=rules.filter_alignment.output.bam,
+        bai=f"{rules.filter_alignment.output.bam}.bai",
+        fqidx=rules.nanopolish_index.output
+    output: os.path.join(basedir, 'eventalign','{sample}','{batch}.tsv')
+    params:
+        jobname='eventalign_{sample}_{batch}',
+        runtime='16:00',
+        memusage='16000',
+        slots='8',
+        misc=''
+    shell: """
+    {nanopolish} eventalign -t {params.slots} -g {reference} -b {input.bam} -r {input.fq} > {output} 
+    """
+
+
+rule all_eventalign:
+    input: expand(rules.eventalign.output, zip, sample=sbf.sb_samples, batch=sbf.sb_batches)
+
+
+
+rule kmer_signal:
+    input:
+        eventalign=temp(rules.eventalign.output),
+    output: os.path.join(basedir, 'kmer_signal','{sample}','{batch}.tsv')
+    params:
+        jobname='eventalign_{sample}_{batch}',
+        runtime='2:00',
+        memusage='8000',
+        slots='1',
+        misc=''
+    shell: """
+    head -1 {input} > {output}
+    cat {input} | grep -v reference | cut -f 3,7  | sort >> {output} 
+    """
+
+
+rule all_kmer_signal:
+    input: expand(rules.kmer_signal.output, zip, sample=sbf.sb_samples, batch=sbf.sb_batches)
+
+
+'''
+This merges the nanopolish methylation calls, loads it into a pandas dataframe
+and stores it in pickled format.
+
+Note that this job is performed per sample per chromosome. It will save one
+outputfile for a sample,chromosome,methylation type combination, in order to 
+break up the data and make it easier to load loater.
+
+So while it merges batches, it also splits up chromosomes.
+'''
+def merge_met_perchrom_input(wildcards):
+    return expand(os.path.join(basedir, 
+        'met', wildcards.sample, '{batch}_met_%s.tsv' % wildcards.mettype),
+        batch=samplebatches(wildcards.sample))
+
+rule merge_met_perchrom:
+    input: merge_met_perchrom_input
+    output: os.path.join(basedir, 'met_merged', '{sample}', '{chrom}_met_{mettype}.pkl')
+    params:
+        jobname='mergemet_{sample}_{chrom}',
+        runtime='12:00',
+        memusage='24000',
+        slots='1',
+        misc=''
+    run:
+        pickle_file = output[0]
+        chrom = wildcards['chrom']
+        sample_met = None
+        for f in input:
+            for lmet in pd.read_csv(f, sep='\t', header=0, chunksize=1000000,
+                               dtype={'chromosome':'category', 
+                                      'strand':'category', 
+                                      'num_calling_strands':np.uint8, 
+                                      'num_motifs':np.uint8}):
+
+                lmet = lmet.loc[lmet.chromosome==chrom].copy()
+                if sample_met is None:
+                    sample_met = lmet
+                else:
+                    sample_met = pd.concat((sample_met, lmet))
+
+        sample_met.to_pickle(pickle_file, compression='gzip')
+
+rule all_merge_met_perchrom:
+    input: expand(rules.merge_met_perchrom.output, sample=unique_samples, chrom=chroms, mettype=mettypes)
+
+
+def merge_met_hdf5_input(wildcards):
+    return expand(os.path.join(basedir,
+        'met', wildcards.sample, '{batch}_met_%s.tsv' % wildcards.mettype),
+        batch=samplebatches(wildcards.sample))
+
+rule merge_met_hdf5:
+    input: merge_met_hdf5_input
+    output: os.path.join(basedir, 'met_merged', '{sample}_{mettype}.h5')
+    params:
+        jobname='mergemet_{sample}_{mettype}',
+        runtime='48:00',
+        memusage='8000',
+        slots='1',
+        misc=''
+    run:
+        with MetH5File(output[0], 'w', compression="lzf") as out_container:
+            for tsv_file in input:
+                print("Adding ", tsv_file)
+                out_container.parse_and_add_nanopolish_file(tsv_file, include_chromosomes=chroms, postpone_sorting_until_close=True)
+            out_container.create_chunk_index()
+
+rule all_merge_met_hdf5:
+    input: expand(rules.merge_met_hdf5.output, sample=unique_samples, mettype=mettypes)
+
+chrombatchsize=50
+
+rule merge_met_hdf5_temp_chromwise:
+    input: merge_met_hdf5_input
+    output: os.path.join(basedir, 'met_merged_mr', '{sample}_{mettype}_{chrombatch}.tsv')
+    params:
+        jobname='mergemet_{sample}_{mettype}_{chrombatch}',
+        runtime='6:00',
+        memusage='2000',
+        slots='1',
+        misc=''
+    run:
+        chrombatch = int(wildcards["chrombatch"])
+        batchchroms = set(chroms[chrombatch*chrombatchsize:(chrombatch+1)*chrombatchsize])
+        with open(output[0], 'w') as out_f:
+            virgin = True
+            for tsv_file in input:
+                with open(tsv_file, "r") as tsv_f:
+                    header = tsv_f.readline()
+                    if virgin:
+                        out_f.write(header)
+                        virgin = False
+                    for line in tsv_f:
+                        line_chrom = line.split("\t")[0]
+                        if line_chrom in batchchroms:
+                            out_f.write(line)
+                out_f.flush()
+
+rule merge_met_hdf5_optimized_for_many_chromosomes:
+    input: expand(rules.merge_met_hdf5_temp_chromwise.output, sample="{sample}", mettype="{mettype}", chrombatch=range(int(np.ceil(len(chroms)/chrombatchsize))))
+    output: os.path.join(basedir,'met_merged_mr','{sample}_{mettype}.h5')
+    params:
+        jobname='mergemet_{sample}_{mettype}',
+        runtime='48:00',
+        memusage='32000',
+        slots='1',
+        misc=''
+    run:
+        with MetH5File(output[0],'w',compression="gzip") as out_container:
+            for tsv_file in input:
+                out_container.parse_and_add_nanopolish_file(tsv_file, postpone_sorting_until_close=True)
+            out_container.create_chunk_index()
+
+rule all_merge_met_hdf5_optimized_for_many_chromosomes:
+    input: expand(rules.merge_met_hdf5_optimized_for_many_chromosomes.output, sample=unique_samples, mettype=mettypes)
+
+
+if "coords_file" in globals():
+    rule nanopolish_to_betascore:
+        input:
+            coords_file = coords_file,
+            methylation_cpg = expand(rules.merge_met_hdf5.output, sample="{sample}", mettype="cpg"),
+            methylation_gpc = expand(rules.merge_met_hdf5.output, sample="{sample}", mettype="gpc")
+        output: Path(basedir).joinpath('met_merged').joinpath("{sample}_met_rate.tsv")
+        params:
+            runtime='24:00',
+            memusage='32000',
+            slots = "48",
+            misc="",
+            jobname="np_betasscore_{sample}",
+        run:
+            from nanopolish_smf.bsseq import load_pickled_bsseq
+            from nanopolish_smf.annotation import load_all_cggc_coords
+            from nanopolish_smf.methylation import read_binarized_call_sums_from_meth5
+            print("Reading BS seq coordinates")
+            bs_seq = load_pickled_bsseq(input.coords_file)
+            print("Grouping")
+            bs_chrom_grouped = bs_seq.groupby("chrom")
+            chrom_intersect = set(chroms).intersection(set(bs_chrom_grouped.groups.keys()))
+            coords_bs_seq = {chrom: bs_chrom_grouped.get_group(chrom)["start"].values for chrom in chrom_intersect}
+            print("Reading all motif coordinates")
+            all_coords = load_all_cggc_coords()
+            print("Start counting")
+            virgin = True
+            for chrom_df in read_binarized_call_sums_from_meth5(all_coords,
+                    [input.methylation_gpc[0],input.methylation_cpg[0]], threshold=2, processes=int(params.slots)):
+                print("Compute overall met rates")
+                chrom_df["met_rate"] = chrom_df["met"] / chrom_df["reads"]
+                print("Writing output")
+                chrom_df.to_csv(output[0], sep="\t", index=False, mode="w" if virgin else "a", header=virgin)
+                virgin = False
+
+    rule all_nanopolish_to_betascore:
+        input: expand(rules.nanopolish_to_betascore.output, sample=unique_samples)
+
+    rule reduce_all_samples_betascore:
+        input: expand(rules.nanopolish_to_betascore.output,sample=unique_samples)
+        output: Path(basedir).joinpath('met_merged').joinpath("ALLmet_rate.tsv")
+        params:
+            **default_smalljob_params,
+            jobname="all_reduce_bs"
+        run:
+            import pandas as pd
+            df_out = None
+            for file in input:
+                df_cur = pd.read_csv(file, sep="\t").set_index(["chrom", "start"])
+                if df_out is None:
+                    df_out = df_cur
+                else:
+                    df_out = df_out.add(df_cur, fill_value=0)
+            df_out["met_rate"] = df_out["met"] / df_out["reads"]
+            df_out.to_csv(output[0],sep="\t",index=True)

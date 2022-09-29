@@ -1,0 +1,15 @@
+rule gatk_allele_count:
+    input: bam=rules.mergebams.output[0],
+           bai=rules.mergebams.output[0] + ".bai"
+    output: Path(basedir, "gatk", "{sample}_asc.tsv")
+    params:
+        jobname = 'gatk_asc_{sample}',
+        runtime = '24:00',
+        memusage = '24000',
+        slots = '1',
+        misc = ''
+    shell:
+        "{gatk} --java-options -Xmx22g CollectAllelicCounts -I {input.bam} -L {variants_file} -R {reference} -O {output}"
+
+rule all_gatk_allele_count:
+    input: expand(rules.gatk_allele_count.output, sample=unique_samples)

@@ -1,0 +1,219 @@
+import numpy as np
+from modusa.diskusage import check_free_space, compute_total_file_size_gb
+
+'''
+##############################################################################
+# Extracting FASTQ from basecalled FAST5 files
+##############################################################################
+
+This rule will open each basecalled fast5 for a sample and batch, and create
+a single fastq file as an outputfile, containing the reads for this sample 
+and batch.
+
+The rule depends on the "basecall_id" variable in the config file. This would
+typically be "Basecall_1D_000" if there was only a single basecalling 
+performed. If there were multiple basecalls (e.g. basecalled with different 
+versions of guppy), make sure you specify the correct basecall id in the 
+config file.
+
+If individual fast5 files could not be opened or basecalls could not be found,
+the entire file will be skipped and a warning written to the log. This is
+done because guppy will sometimes file to produce basecalls, and is such a
+case we just skip that file and move on.
+'''
+
+def fast5_to_fastq_input(wildcards, multiplexed):
+
+    outfile = Path(rules.fast5_to_fastq.output.fq.format(**wildcards))
+    if outfile.exists():
+        # Shortcut
+        return
+
+    indir = os.path.join(basedir,'raw',wildcards['sample'],'batched', wildcards['batch'])
+    sbf_samples = sbf.mp_ori_sbf_samples if multiplexed else sbf.unique_sbf_samples
+    sbf_batches = sbf.mp_ori_sbf_batches if multiplexed else sbf.unique_sbf_batches
+    sbf_filenames = sbf.mp_ori_sbf_filenames if multiplexed else sbf.unique_sbf_filenames
+
+    for i in range(len(sbf_filenames)):
+        if sbf_samples[i] == wildcards['sample'] and sbf_batches[i] == wildcards['batch']:
+            if multiplexed and sbf_batches[i][0]=="B":
+                yield os.path.join(indir, sbf_filenames[i])
+            if not multiplexed and sbf_batches[i][0]!="B":
+                yield os.path.join(indir, sbf_filenames[i])
+
+def compute_ont_mean_q_score(qstring):
+    """
+    Computing mean quality score as documented here:
+    https://labs.epi2me.io/quality-scores/
+    """
+    qvals = np.array([ord(q) for q in qstring.strip()]) - 33
+    return -10 * np.log10(np.sum(np.power(10,(-(qvals) / 10))) / len(qvals))
+
+def extract_fastq(infiles, out_fastq, out_summary):
+    # Rudimentary disk space check. Output is estimated to be half of the input size,
+    # but we also want to multiply with 2 to be sure.. so this works
+    out_path = check_free_space(out_fastq,compute_total_file_size_gb(infiles))
+    basecall_group = 'Basecall_1D_%s' % basecall_id
+    passed = 0
+    failed = 0
+    crit = 0
+    with open(out_path,'w') as of, open(out_summary, "wt") as sof:
+        sof.write("read_id\tfilename_fast5\tbasecaller_version\n")
+        for i in range(len(infiles)):
+            with h5py.File(infiles[i],'r') as f:
+                for read in f.keys():
+                    try:
+                        if basecall_group.endswith("latest"):
+                            basecall_groups = sorted([k for k in f[read]["Analyses"].keys() if k.startswith("Basecall_1D_")])
+                            if len(basecall_groups) == 0:
+                                continue
+                            read_basecall_group = basecall_groups[-1]
+                        else:
+                            read_basecall_group = basecall_group
+
+                        group_path = f"Analyses/{read_basecall_group}/"
+                        version = f[read][group_path].attrs["version"].decode('ascii')
+                        fq = f[read][group_path]["BaseCalled_template/Fastq"][()].decode('ascii')
+                        fq = fq.split('\n')
+                        if read.startswith('read_'):
+                            read = read[5:]
+                        fq[0] = f'@{read}'
+                        mean_q = compute_ont_mean_q_score(fq[3])
+                        if mean_q >= min_read_q:
+                            of.write('\n'.join(fq))
+                            passed += 1
+                        else:
+                            failed += 1
+                        sof.write(f"{read}\t{infiles[i]}\t{version}\n")
+                    except KeyError:
+                        print(f"Unable to read {read}")
+
+
+    print(f"{passed} passed, {failed} QC, {crit} critical error")
+
+
+rule fast5_to_fastq_multiplexed:
+    input: lambda wc: fast5_to_fastq_input(wc, multiplexed=True)
+    output: fq = Path(basedir,'fastq_multiplexed','{sample}',"{batch}",f"{{batch}}.{fastq_ending}"),
+            summary = Path(basedir,'fastq_multiplexed','{sample}',"{batch}","{batch}_summary.txt"),
+    params:
+        jobname='fq_{sample}{batch}',
+        runtime='01:59',
+        memusage='1000',
+        slots='1',
+        misc=''
+    run: extract_fastq(input, output.fq, output.summary)
+
+rule fast5_to_fastq:
+    input: lambda wc: fast5_to_fastq_input(wc, multiplexed=False)
+    output: fq = Path(basedir, "fastq", "{sample}", f"{{batch}}.{fastq_ending}"),
+            summary = Path(basedir, "fastq", "{sample}", "{batch}_summary.txt"),
+    params:
+        jobname='fq_{sample}{batch}',
+        runtime='01:59',
+        memusage='1000',
+        slots='1',
+        misc=''
+    run: extract_fastq(input, output.fq, output.summary)
+
+rule sequencing_summary:
+    input: unique = expand(rules.fast5_to_fastq.output.summary, zip, sample=sbf.unique_sb_samples, batch=sbf.unique_sb_batches),
+           multiplexed=expand(rules.fast5_to_fastq_multiplexed.output.summary,zip,sample=sbf.mp_ori_sb_samples,batch=sbf.mp_ori_sb_batches)
+    output: summary = Path(basedir, "fastq", "sequencing_summary.txt")
+    params:
+        jobname = 'sequencing_summary',
+        runtime = '01:00',
+        memusage = '8000',
+        slots = '1',
+        misc = ''
+    run:
+        with open(output.summary, "wt") as f:
+            f.write("read_id\tfilename_fast5\tbasecaller_version\n")
+            for infiles in [input.unique, input.multiplexed]:
+                for infile in infiles:
+                    header = True
+                    for line in open(infile, "rt"):
+                        if header:
+                            header = False
+                            continue
+                        f.write(f"{line.strip()}\n")
+
+def get_multiplexed_fastq(wc, return_summary=False):
+    for origin in multiplexed_samples:
+        for bc, sample in multiplexed_samples[origin].items():
+            if sample == wc["sample"]:
+                if return_summary:
+                    return Path(basedir,"fastq_multiplexed",  origin, f"B{wc['batch']}","demultiplexed", "barcoding_summary.txt")
+                else:
+                    return Path(basedir, 'fastq_multiplexed', origin, f"B{wc['batch']}", "demultiplexed", bc, "fastq_runid_unknown_0.fastq")
+
+rule fastq_demultiplex:
+    input: Path(basedir, 'fastq_multiplexed', '{sample}', "B{batch}", f"B{{batch}}.{fastq_ending}")
+    output: Path(basedir, 'fastq_multiplexed', "{sample}", "B{batch}", "demultiplexed", "barcoding_summary.txt")
+    params:
+        indir = lambda wc: Path(basedir, 'fastq_multiplexed', wc['sample'], f"B{wc['batch']}"),
+        outdir = lambda wc: Path(basedir, 'fastq_multiplexed', wc["sample"], f"B{wc['batch']}", "demultiplexed"),
+        jobname='demultiplexing_{sample}{batch}',
+        runtime='08:00',
+        memusage='8000',
+        slots='1',
+        misc=''
+    shell: """
+        {guppy_cpu_dir}/bin/guppy_barcoder --barcode_kits {multiplexing_kit} --detect_adapter --detect_barcodes -i {params.indir} -s  {params.outdir} -q 0 --trim_primers --trim_adapters --trim_barcodes;
+        """
+
+rule fastq_move_demultiplex:
+    input: lambda wc: get_multiplexed_fastq(wc, return_summary=True)
+    output: os.path.join(basedir, 'fastq', '{sample}', f'B{{batch}}.{fastq_ending}')
+    params:
+        infile=lambda wc: get_multiplexed_fastq(wc, return_summary=False),
+        jobname='move_demultiplexed_{sample}{batch}',
+        runtime='00:15',
+        memusage='1000',
+        slots='1',
+        misc=''
+    shell: """
+        if [[ -f {params.infile} ]]; then
+            mv {params.infile} {output}
+        else
+            touch {output}
+        fi
+        """
+
+ruleorder: fastq_move_demultiplex > fast5_to_fastq
+
+checkpoint all_fast5_to_fastq:
+    input: expand(rules.fast5_to_fastq.output.fq, zip, sample=sbf.sb_samples,  batch=sbf.sb_batches)
+
+rule compress_fastq:
+    input: fq = rules.fast5_to_fastq.output.fq
+    output: fqbgz = temp(rules.fast5_to_fastq.output.fq + ".tmp.bgz")
+    params:
+        jobname='bgzip',
+        runtime='02:00',
+        memusage='1000',
+        slots='1',
+        misc=''
+    shell: """
+              module load htslib;
+              bgzip -c {input.fq} > {output.fqbgz}
+           """
+
+rule merge_fastq:
+    input: lambda wc: [rules.compress_fastq.output.fqbgz.format(sample=wc["sample"], batch=b) for b in samplebatches(wc["sample"])]
+    output: fqbgz = Path(basedir, 'fastq', "{sample}.fq.bgz")
+    params:
+        jobname='merge_fq_bgz_{sample}',
+        runtime='24:00',
+        memusage='8000',
+        slots='1',
+        misc=''
+    run:
+        with open(output.fqbgz, "wb") as out_f:
+            for infile in input:
+                with open(infile,"rb") as in_f:
+                    buf = in_f.read()
+                    out_f.write(buf)
+
+rule all_merge_fastq:
+    input: expand(rules.merge_fastq.output, sample=unique_samples)
