@@ -32,7 +32,7 @@ class PromoterDiffmetPlotter:
                 500,
                 min_diff=0.5,
                 b_minus_a=True,
-                drop_insignificant=True,
+                drop_insignificant=False,
                 pval_threshold=0.05,
                 progress=True,
             )
@@ -73,6 +73,7 @@ class PromoterDiffmetPlotter:
             annotations = [
                 {"region": [hit["start"], hit["end"]], "text": "Differential methylation", "color": "r"} for hit in hits
             ] + additional_annotations
+            print(annotations)
             pl.plot_region(chrom, start, end, figure_kwargs=figure_kwargs, ws=0, annotations=annotations, **kwargs)
 
 
@@ -94,7 +95,7 @@ class RegionDiffmetPlotter:
                 PycomethOutput(met_comp_file=val).read_file(
                     min_diff=0.35,
                     b_minus_a=True,
-                    drop_insignificant=True,
+                    drop_insignificant=False,
                     pval_threshold=0.05,
                     progress=True,
                 )
@@ -130,7 +131,7 @@ if __name__ == "__main__":
     gff.build_index()
     
     enhancers = Enhancers(enhancers_annotation_file=module_config.enhancer_cerebellum_file)
-    enhancers.load()
+    enhancers.load(replace_chr=False)
     enhancers.annotate_nearest_gene(gff, maxdist=5000)
     enhancers.filter_nearest_gene_none()
     
@@ -178,28 +179,71 @@ if __name__ == "__main__":
             with_germline=False,
         )
     
-    with pa.open_multipage_pdf("genes_of_interest"):
-        figure_kwargs = {"figsize": (8, 4)}
-        pl.plot_region(
-            "6",
-            6001208 - 4500,
-            6001208 + 5499,
-            figure_kwargs=figure_kwargs,  # annotations=annotations,
-            ws=0,
-            title="NRN1",
-            aggregate_samples=False,
-            with_germline=True,
+    with pa.open_multipage_pdf("tp53"):
+        pl.plot_region("chr17", 7668944-50000, 7692092+50000, figure_kwargs=figure_kwargs, annotations=[], ws=0, title="TP53",
+                       aggregate_samples=False, with_germline=True, with_no_hp=True, coordinate_space=True,
+                       marker_height=0.9, fontsize=8, show_has_value_indicator=False)
+        
+        
+    with pa.open_multipage_pdf("diffmet_example_genes"):
+        rplot.plot("chr14",41726997-2000, 41728947+2000,  figure_kwargs=figure_kwargs, title="Chr11",
+                       aggregate_samples=False, with_germline=True, with_no_hp=True, coordinate_space=False,
+                       marker_height=0.9, fontsize=8, show_has_value_indicator=False, additional_annotations=[], sample_comp=True)
+        
+        pl.plot_region("chr10", 75398609-2000, 75398999+2000, figure_kwargs=figure_kwargs, annotations=[], ws=0,
+            title="MAP3K14", aggregate_samples=False, with_germline=False, with_no_hp=True, coordinate_space=False,
+            marker_height=0.9, fontsize=8, show_has_value_indicator=False)
+    
+
+        genes = ["ENSG00000166436",  # TRIM66
+                 "ENSG00000006062" # SPATA32
+        ]
+        pdplot.plot(genes, sample_comp=False, aggregate_samples=True, with_germline=False, with_no_hp=False,
+                    coordinate_space=False, marker_height=0.9, fontsize=8, show_has_value_indicator=True, )
+        genes = [
+            "ENSG00000124785", # NRN1
+            "ENSG00000185920", # PTCH1
+        ]
+        pdplot.plot(genes, sample_comp=True, aggregate_samples=True, with_germline=False, with_no_hp=False,
+                    coordinate_space=False, marker_height=0.9, fontsize=8, show_has_value_indicator=False,
+        )
+        genes = [
+            "ENSG00000118946" # PCDH17
+        ]
+        pdplot.plot(genes, sample_comp=False,
+            aggregate_samples=True,
+            with_germline=False,
             with_no_hp=False,
             coordinate_space=False,
             marker_height=0.9,
             fontsize=8,
             show_has_value_indicator=False,
         )
+
+    
+    with pa.open_multipage_pdf("genes_of_interest"):
+        figure_kwargs = {"figsize": (8, 4)}
+        annotations = [{'region': [6002148, 6003069], 'text': 'Differential methylation', 'color': 'r'}]
+        pl.plot_region(
+            "chr6",
+            5999000,
+            6009050,
+            figure_kwargs=figure_kwargs, annotations=annotations,
+            ws=0,
+            title="NRN1",
+            aggregate_samples=True,
+            with_germline=False,
+            with_no_hp=False,
+            coordinate_space=False,
+            marker_height=0.9,
+            fontsize=8,
+            show_has_value_indicator=True,
+        )
         
         # PCDH17
-        annotations = [{"region": [57633334, 57634150], "text": "Differential methylation", "color": "r"}]
+        annotations = [{"region": [57633174, 57635093], "text": "Differential methylation", "color": "r"}]
         pl.plot_region(
-            "13",
+            "chr13",
             57630000,
             57634998,
             figure_kwargs=figure_kwargs,
@@ -211,13 +255,13 @@ if __name__ == "__main__":
             with_germline=False,
             with_no_hp=False,
             marker_height=0.9,
-            fontsize=8,
+            fontsize=8, show_has_value_indicator=True,
         )
         
         # PTCH1
-        annotations = [{"region": [95503643, 95504075], "text": "Differential methylation", "color": "r"}]
+        annotations = [{"region": [95503519, 95504075], "text": "Differential methylation", "color": "r"}]
         pl.plot_region(
-            "9",
+            "chr9",
             95498525,
             95508336,
             figure_kwargs=figure_kwargs,
@@ -229,8 +273,9 @@ if __name__ == "__main__":
             with_germline=False,
             with_no_hp=False,
             marker_height=0.9,
-            fontsize=8,
+            fontsize=8, show_has_value_indicator=True,
         )
+
     
     with pa.open_multipage_pdf("mb_known_genes"):
         pdplot.plot(["ENSG00000185920"], with_germline=True)
@@ -238,7 +283,7 @@ if __name__ == "__main__":
     
     with pa.open_multipage_pdf("BASP1"):
         pl.plot_region(
-            "17",
+            "chr17",
             17229000 - 5000,
             17229000 + 5000,
             ws=0,
@@ -249,10 +294,23 @@ if __name__ == "__main__":
             with_no_hp=True,
             annotations=[],
         )
-    
+
+    with pa.open_multipage_pdf("chr11_17_ctg2_met"):
+        pl.plot_region("chr11", 8430000-25000, 8640000+25000, ws=0, fontsize=8, aggregate_samples=True,
+            with_germline=True, with_relapse=True, with_no_hp=False, hold=True, figure_kwargs=dict(figsize=(16,6)))
+        plt.vlines([8437500, 8636500], 0, plt.ylim()[1])
+        pa.savefig()
+        
+    with pa.open_multipage_pdf("chr11_17_ctg2_adjacent_met"):
+        pl.plot_region("chr17", 22923858, 22950292, ws=0, fontsize=8, aggregate_samples=False,
+            with_germline=True, with_relapse=True, with_no_hp=True, figure_kwargs=dict(figsize=(16,6)))
+        pl.plot_region("chr17", 26608681, 26631450, ws=0, fontsize=8, aggregate_samples=False, with_germline=True,
+                       with_relapse=True, with_no_hp=True, figure_kwargs=dict(figsize=(16, 6)))
+
+
     with pa.open_multipage_pdf("MYPOP"):
         pl.plot_region(
-            "19",
+            "chr19",
             45900356 - 5000,
             45900356 + 5000,
             ws=0,
@@ -264,7 +322,7 @@ if __name__ == "__main__":
             annotations=[{"region": [45900356 - 10, 45900356 + 10], "text": "Breakpoint", "color": "red"}],
         )
         pl.plot_region(
-            "19",
+            "chr19",
             58586563 - 1000,
             58586648 + 1000,
             ws=0,
@@ -276,7 +334,7 @@ if __name__ == "__main__":
             annotations=[{"region": [58586563, 58586648], "text": "Insertion", "color": "red"}],
         )
         pl.plot_region(
-            "19",
+            "chr19",
             8057491 - 1000,
             8057746 + 1000,
             ws=0,
@@ -433,13 +491,33 @@ if __name__ == "__main__":
         )
     
     with pa.open_multipage_pdf("TBX1"):
+        figure_kwargs = {"figsize": (10, 4)}
         additional_annotations = [
             {"region": [19757000, 19757201], "text": "Ensembl promoter", "color": "g"},
             {"region": [19757800, 19758201], "text": "Ensembl promoter", "color": "g"},
             {"region": [19759600, 19764200], "text": "Ensembl promoter", "color": "g"},
         ]
         pl.draw_transcripts_separately = True
-        pdplot.plot(
+        rplot.plot(
+            "chr22",
+            19755570,
+            19765181,
+            figure_kwargs=figure_kwargs,
+            title="TBX1",
+            aggregate_samples=True,
+            with_germline=False,
+            with_no_hp=False,
+            coordinate_space=False,
+            marker_height=0.9,
+            fontsize=8,
+            show_has_value_indicator=True,
+            sample_comp=True,
+            additional_annotations=additional_annotations,
+        )
+        pl.draw_transcripts_separately = False
+        
+        pl.draw_transcripts_separately = True
+        rpl.plot(
             ["ENSG00000184058"],
             with_germline=False,
             aggregate_samples=True,
@@ -466,4 +544,57 @@ if __name__ == "__main__":
             show_has_value_indicator=False,
             sample_comp=False,
             additional_annotations=[{"region": (57706143 - 100, 57706143 + 100), "text": "SNP", "color": "r"}],
+        )
+    
+    with pa.open_multipage_pdf("asm_ase_genes"):
+        idx = plot_data["shapes"] == "*"
+        for gene in plot_data["gene_ids"][idx]:
+            gene = gff.get_gene(gene)
+            rplot.plot(
+                gene.parent.name,
+                gene.start - 5000,
+                gene.end + 5000,
+                figure_kwargs={"figsize": (20, 20)},
+                title=gene.name,
+                aggregate_samples=False,
+                with_germline=False,
+                with_no_hp=True,
+                coordinate_space=False,
+                marker_height=0.9,
+                fontsize=8,
+                show_has_value_indicator=False,
+                sample_comp=False,
+                additional_annotations=[],
+            )
+    
+    with pa.open_multipage_pdf("HLA-DQA1"):
+        rplot.plot(
+            "6",
+            32624450 - 2000,
+            32652057 + 2000,
+            figure_kwargs={"figsize": (20, 20)},
+            title="HLA-DQA1",
+            aggregate_samples=False,
+            with_germline=True,
+            with_no_hp=True,
+            coordinate_space=False,
+            marker_height=0.9,
+            fontsize=8,
+            show_has_value_indicator=False,
+            sample_comp=False,
+        )
+    
+    with pa.open_multipage_pdf("AC138761.1_deletion"):
+        pl.plot_region(
+            "17",
+            22278000,
+            22300000,
+            figure_kwargs=dict(figsize=(20, 20)),
+            ws=0,
+            fontsize=8,
+            title="deletion around AC138761.1",
+            aggregate_samples=False,
+            with_germline=True,
+            with_no_hp=True,
+            coordinate_space=False,
         )

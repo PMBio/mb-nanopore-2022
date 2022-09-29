@@ -55,7 +55,7 @@ class ASE:
         col_names_types,
         pval_thres=0.05,
         load_gene_annotation=False,
-        compute_fdr=False,
+        compute_fdr=False, add_chr=False
     ):
         self.ase_df = pd.read_csv(
             self.wasp_ase_file,
@@ -63,6 +63,7 @@ class ASE:
             usecols=col_names_types.keys(),
             dtype={k: v for k, (_, v) in col_names_types.items()},
         ).rename({k: v for k, (v, _) in col_names_types.items()}, axis=1)
+        self.ase_df["chr"] = self.ase_df["chr"].map(lambda x: f"chr{x}")
         self.ase_df = self.ase_df.set_index(["chr", "pos", "ALT"], drop=True)
         if pval_thres is not None:
             if compute_fdr:
@@ -75,7 +76,7 @@ class ASE:
             else:
                 self.ase_df = self.ase_df.loc[self.ase_df["pval"] < pval_thres]
     
-    def _load_wasp(self, load_range=False, load_exon_annotation=False, load_gene_annotation=False, **kwargs):
+    def _load_wasp(self, load_range=False, load_exon_annotation=False, load_gene_annotation=False,**kwargs):
         col_names_types = {
             "TEST.SNP.CHROM": ("chr", str),
             "TEST.SNP.POS": ("pos", int),
@@ -163,7 +164,23 @@ class ASE:
         reduced_df = self.ase_df[["exonid", "hp1", "hp2"]].groupby("exonid").sum()
         reduced_df["geneid"] = reduced_df.index.map(lambda x: x.split("_")[0])
         reduced_df["hp1_ratio"] = reduced_df["hp1"] / (reduced_df["hp1"] + reduced_df["hp2"])
+        reduced_df["pval"] = self.ase_df[["exonid", "pval"]].groupby("exonid").agg(lambda x: next(iter(x)))
+        if "fdr" in self.ase_df.columns:
+            reduced_df["fdr"] = (self.ase_df[["exonid", "fdr"]].groupby("exonid").agg(lambda x: next(iter(x))))
+
         return reduced_df
+    
+    def get_per_exon_hp_ratio_max_effect(self):
+        reduced_df = self.get_per_exon_hp_ratio()
+        reduced_df["effect"] = np.abs(reduced_df["hp1_ratio"] - 0.5)
+        genes = set(reduced_df["geneid"])
+        reduced_df = reduced_df.groupby("geneid")
+        rows = []
+        for gene in genes:
+            gene_row = reduced_df.get_group(gene).sort_values("effect").iloc[-1]
+            rows.append(gene_row)
+            
+        return pd.DataFrame(rows).set_index("geneid", drop=True)
     
     def get_per_gene_hp_ratio(self):
         reduced_df = self.ase_df[["geneid", "hp1", "hp2"]].groupby("geneid").sum()

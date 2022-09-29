@@ -25,7 +25,7 @@ if __name__ == "__main__":
         pm = PycomethOutput(met_comp_file=pm_file)
         samplecomp_hits += [
             {"chrom": line["chromosome"], "start": line["start"], "end": line["end"], "diff": line["diff"]}
-            for line in pm.read_file(b_minus_a=True, drop_insignificant=True, pval_threshold=0.05, min_diff=min_diff)
+            for line in pm.read_file(b_minus_a=True, drop_insignificant=False, pval_threshold=0.05, min_diff=min_diff)
         ]
     
     samplecomp_hits = merge_duplicate_diffmet_hits(samplecomp_hits)
@@ -33,14 +33,10 @@ if __name__ == "__main__":
     manifest_850k = pd.read_csv(met_850k_manifest_path, sep="\t").set_index("probeID", drop=True)
     manifest_850k = manifest_850k[["CpG_chrm", "CpG_beg", "CpG_end"]].copy()
     manifest_850k = manifest_850k.rename({"CpG_chrm": "chrom", "CpG_beg": "start", "CpG_end": "end"}, axis=1)
-    manifest_850k["chrom"] = manifest_850k["chrom"].map(lambda x: x.replace("chr", "") if isinstance(x, str) else x)
     manifest_850k = manifest_850k.groupby("chrom")
     
     path_450k_metadata = module_config.methylation450karray_metadata_path
     manifest_450k = pd.read_csv(path_450k_metadata, sep="\t").set_index("probeID", drop=True)
-    manifest_450k["CpG_chrm"] = manifest_450k["CpG_chrm"].map(
-        lambda x: x.replace("chr", "") if isinstance(x, str) else x
-    )
     manifest_450k = manifest_450k.rename({"CpG_chrm": "chrom", "CpG_beg": "start", "CpG_end": "end"}, axis=1)
     manifest_450k = manifest_450k.groupby("chrom")
     

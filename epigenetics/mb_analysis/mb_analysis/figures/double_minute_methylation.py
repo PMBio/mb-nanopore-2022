@@ -11,18 +11,19 @@ from nanoepitools.math import fdr_from_pvals
 from nanoepitools.plotting.general_plotting import PlotArchiver
 from mb_analysis.config import module_config
 from meth5.meth5 import MetH5File
+from mb_analysis.chromothriptic_breakpoints.liftover_assembly_to_ref import LiftoverAssemblyToRef
 
 """
 Creates double minute methylation figure. At the time of writing this is Figure 4a.
 """
 
 block_config = [
-    {"chr": "17", "start": 16030000, "end": 16360000, "id": 1, "color": "#F99B2F"},
-    {"chr": "17", "start": 20860000, "end": 22210000, "id": 2, "color": "#E03723"},
-    {"chr": "17", "start": 27090000, "end": 27110000, "id": 3, "color": "#9A0262"},
-    {"chr": "17", "start": 45140000, "end": 46030000, "id": 4, "color": "#111575"},
-    {"chr": "11", "start": 8430000, "end": 8640000, "id": 5, "color": "#126664"},
-    {"chr": "11", "start": 15640000, "end": 16180000, "id": 6, "color": "#6FC33D"},
+    {"chr": "chr17", "start": 16030000, "end": 16360000, "id": 1, "color": "#F99B2F"},
+    {"chr": "chr17", "start": 20860000, "end": 22210000, "id": 2, "color": "#E03723"},
+    {"chr": "chr17", "start": 27090000, "end": 27110000, "id": 3, "color": "#9A0262"},
+    {"chr": "chr17", "start": 45140000, "end": 46030000, "id": 4, "color": "#111575"},
+    {"chr": "chr11", "start": 8430000, "end": 8640000, "id": 5, "color": "#126664"},
+    {"chr": "chr11", "start": 15640000, "end": 16180000, "id": 6, "color": "#6FC33D"},
 ]
 
 
@@ -103,9 +104,8 @@ def compute_betascore(llrs, llr_threshold=2):
 def bs_fun(llrs):
     compute_betascore(llrs, llr_threshold=2)
 
-
 def get_bs_for_region(chrom, start, end):
-    dm_reads = set(dm_h5[chrom].get_values_in_range(start, end).get_read_names())
+    dm_reads = set(read for lo_chrom, lo_start, lo_end in liftover.ref_to_assembly(chrom,start,end) for read in dm_h5[lo_chrom].get_values_in_range(lo_start, lo_end).get_read_names())
     dm_reads = dm_reads.union(additional_dm_reads)
     
     region_vals = mf[chrom].get_values_in_range(start, end)
@@ -132,6 +132,7 @@ def get_bs_for_region(chrom, start, end):
     idx = ~np.isnan(bs_normal)
     bs_normal = bs_normal[idx]
     coords_normal = coords_normal[idx]
+    
     return coords_dm, bs_dm, coords_normal, bs_normal
 
 
@@ -142,8 +143,6 @@ def plot_segment_met(contig, bs_interpolation_step=1000):
     
     for _, segment in asm_to_ref.get_group(contig).iterrows():
         chrom = segment["chrom"]
-        if chrom not in dm_h5.get_chromosomes() or chrom not in normal_h5.get_chromosomes():
-            continue
         
         start = segment["ref_start"]
         end = segment["ref_end"]
@@ -173,7 +172,7 @@ def plot_segment_met(contig, bs_interpolation_step=1000):
             x = np.arange(min(plt_metrate_x_dm), max(plt_metrate_x_dm), bs_interpolation_step)
             plt.fill_between(x, 0, f(x), color=dm_color, alpha=0.5, linewidth=0)
         else:
-            print("Not enough llrs for: ", classify_block(chrom, start, end))
+            print("Not enough llrs for: ", chrom, start, end, "(block type: ", classify_block(chrom, start, end), ")")
         
         cur_plt_x += width
     # plt.grid(which="major", axis="y")
@@ -201,7 +200,7 @@ def plot_segments(contig):
         plt.gca().add_patch(rect)
     plt.ylim(-0.75, 1.1)
     legend_elements = [
-        Patch(facecolor=bc["color"], edgecolor="w", linewidth=0, label=f"chr{bc['chr']}:{bc['start']}-{bc['end']}")
+        Patch(facecolor=bc["color"], edgecolor="w", linewidth=0, label=f"{bc['chr']}:{bc['start']}-{bc['end']}")
         for bc in block_config
     ]
     plt.legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc="upper left")
@@ -258,6 +257,9 @@ def plot_diffmet(contig):
 
 if __name__ == "__main__":
     asm_to_ref_path = Path(module_config.double_minute_twocontigs_parts_path)
+    liftover = LiftoverAssemblyToRef()
+    liftover.load(asm_to_ref_path, replace_chr=False)
+    
     asm_to_ref = pd.read_csv(
         asm_to_ref_path,
         sep="\t",
@@ -302,8 +304,7 @@ if __name__ == "__main__":
     additional_dm_reads = find_reads_spanning_chromothriptic_breakpoints()
     dm_reads = set()
     
-    dm_h5 = MetH5File(module_config.double_minute_liftover_m5, "r")
-    normal_h5 = MetH5File(module_config.primary_without_dm_reads_m5, "r")
+    dm_h5 = MetH5File(module_config.double_minute_m5, "r")
 
 
 with pa.open_multipage_pdf("dm_two_parts_met_rate"):

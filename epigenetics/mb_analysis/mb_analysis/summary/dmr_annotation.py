@@ -1,8 +1,10 @@
 import pandas as pd
+import numpy as np
 from nanoepitools.annotations.enhancers import Enhancers
 from nanoepitools.pycometh_result import PycomethOutput, merge_duplicate_diffmet_hits
 from nanoepitools.annotations.annotations import GFFAnnotationsReader
 
+from mb_analysis.summary.outlier_analysis_result import OutlierAnalysisResults
 from mb_analysis.config import module_config
 from mb_analysis.reference_cpgs import ReferenceCpGs
 
@@ -19,7 +21,7 @@ def load_samplecomp_hits():
         pm = PycomethOutput(met_comp_file=pm_file)
         samplecomp_hits += [
             {"chrom": line["chromosome"], "start": line["start"], "end": line["end"]}
-            for line in pm.read_file(b_minus_a=True, drop_insignificant=True, pval_threshold=0.05, min_diff=min_diff)
+            for line in pm.read_file(b_minus_a=True, drop_insignificant=False, pval_threshold=0.05, min_diff=min_diff)
         ]
     
     return merge_duplicate_diffmet_hits(samplecomp_hits)
@@ -75,7 +77,6 @@ def compute_fraction_cpgs_in_promoters(gff, pm, hits):
 
 def compute_fraction_cpgs_in_enhancers(enhancers, pm, hits):
     enhancers_hit = pm.load_enhancers_hit(enhancers, hits=hits, map_to="index")
-    print(len(enhancers_hit))
     
     def enhancer_region(index):
         return enhancers.enhancers_df.loc[index]
@@ -95,11 +96,11 @@ if __name__ == "__main__":
     gff.read(module_config.gff_file, only_protein_coding=False)
     gff.build_index()
     enhancers = Enhancers(enhancers_annotation_file=module_config.enhancer_cerebellum_file)
-    enhancers.load()
+    enhancers.load(replace_chr=False)
     enhancers.annotate_nearest_gene(gff)
     enhancers.filter_nearest_gene_none()
     
-    pm_parameters = dict(drop_insignificant=True, b_minus_a=True, min_diff=0.5)
+    pm_parameters = dict(drop_insignificant=False, b_minus_a=True, min_diff=0.5)
     pm_hmm = PycomethOutput(met_comp_file=module_config.pycometh_primary_relapse_file_hmm)
     pm_cgi = PycomethOutput(met_comp_file=module_config.pycometh_primary_relapse_file_cgi)
     
@@ -120,3 +121,24 @@ if __name__ == "__main__":
     cpgs_in_promoter = compute_fraction_cpgs_in_promoters(gff, pm_hmm, hits_combined)
     
     cpgs_in_enhancer = compute_fraction_cpgs_in_enhancers(enhancers, pm_hmm, hits_combined)
+
+    ### ASM ###
+    pm_parameters = dict(drop_insignificant=False, b_minus_a=True, min_diff=0.5)
+    for sample in "Primary", "Relapse":
+        pm_asm = PycomethOutput(met_comp_file=module_config.pycometh_haplotype_sample_template_file.format(sample=sample))
+    
+        asm_hits = list(pm_asm.read_file(**pm_parameters))
+        # ugly workaround for a compatibility issue
+        for hit in asm_hits:
+            hit["chromosome"] = hit["chrom"]
+    
+        reference_cpgs.add_cpgs_to_dmr_hits(asm_hits, upper=True)
+    
+        asm_cpgs_in_cgi = compute_fraction_cpgs_in_cgi(pm_asm, asm_hits)
+    
+        cpgs_in_promoter = compute_fraction_cpgs_in_promoters(gff, pm_asm, asm_hits)
+    
+        cpgs_in_enhancer = compute_fraction_cpgs_in_enhancers(enhancers, pm_asm, asm_hits)
+        print(f"ASM {sample}:")
+        print("CpGs in promoters: ", cpgs_in_promoter)
+        print("CpGs in enhancer: ", cpgs_in_enhancer)

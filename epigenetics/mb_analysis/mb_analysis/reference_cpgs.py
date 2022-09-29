@@ -6,7 +6,7 @@ def format_cpg(chrom, pos):
 
 class ReferenceCpGs:
     def __init__(self):
-        self.ref = pyfaidx.Fasta(module_config.reference_fasta_file)
+        self.ref = pyfaidx.Fasta(module_config.reference_softmasked_fasta_file)
     
     def get_CGs(self, chrom, start, end, upper=True, formatted=False):
         seq = str(self.ref[chrom][start : end + 1])

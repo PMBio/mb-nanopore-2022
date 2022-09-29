@@ -6,7 +6,7 @@ setuptools.setup(
     author="Rene Snajder",
     author_email="r.snajder@dkfz-heidelberg.de",
     description="ASE and ASM analysis for MB project",
-    url="https://github.com/PMBio/mb-nanopore-2022´",
+    url="https://github.com/snajder-r/medulloblastoma_analysis´",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -17,11 +17,11 @@ setuptools.setup(
         "numpy",
         "pandas",
         "matplotlib",
-        "meth5==0.7.0",
+        "meth5",
         "tqdm",
-        "nanoepitools==0.2.0",
+        "nanoepitools",
         "mygene",
-        "scipy"
+        "scipy",
     ],
     python_requires='>=3.7',
 )

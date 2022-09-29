@@ -167,7 +167,7 @@ if __name__ == "__main__":
     sample = "Primary"
     
     bam_dir = Path(module_config.bam_template_dir.format(sample=sample))
-    bam_files = [bf for bf in bam_dir.iterdir() if bf.name.endswith(".bam")]
+    bam_files = [bf for bf in bam_dir.iterdir() if bf.name.endswith("sorted.filtered.bam")]
     
     good_svs = 0
     
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     
     pa = PlotArchiver("sv_vs_met", config=module_config)
     
-    workers = 16
+    workers = 8
     input_queue = Queue(maxsize=workers * 5)
     output_queue = Queue(maxsize=workers * 100)
     
@@ -188,7 +188,9 @@ if __name__ == "__main__":
         Process(target=worker_genotype, args=(input_queue, output_queue, bam_files, m5_path)) for _ in range(workers)
     ]
     output_process = Process(target=worker_output, args=(output_queue, len(sv_list), workers))
+    """
     
+    """
     for p in worker_processes:
         p.start()
     output_process.start()

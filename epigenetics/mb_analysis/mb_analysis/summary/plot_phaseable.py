@@ -13,14 +13,19 @@ if __name__ == "__main__":
     samples = ["Germline", "Primary", "Relapse"]
     
     for sample in samples:
+        
         with MetH5File(module_config.meth5_template_file.format(sample=sample), "r") as f:
+            rgs = {v:k for k,v in f.get_all_read_groups("haplotype").items()}
+            h1 = rgs["H1"]
+            h2 = rgs["H2"]
+            hids = f.h5_fp["reads/read_groups/haplotype"][()]
             counts[sample] = {
-                "hp2": (f.h5_fp["reads/read_groups/haplotype"][()] == 2).sum(),
-                "hp1": (f.h5_fp["reads/read_groups/haplotype"][()] == 1).sum(),
-                "nohp": (f.h5_fp["reads/read_groups/haplotype"][()] == -1).sum(),
+                "hp2": (hids == h1).sum(),
+                "hp1": (hids == h2).sum(),
+                "nohp": sum(hid not in {h1,h2} for hid in hids),
             }
     
-    plt.figure()
+    pa.figure()
     plt.title("Phaseable reads")
     plt.bar([0, 4, 8], [counts[s]["nohp"] for s in samples], color="gray", label="Unphased")
     plt.bar([1, 5, 9], [counts[s]["hp1"] for s in samples], color="#D87183", label="HP1")

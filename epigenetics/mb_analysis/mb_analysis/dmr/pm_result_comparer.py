@@ -58,7 +58,7 @@ class PMComparer:
         self.gff.build_index()
         print("Reading Enhancers")
         self.enhancers = Enhancers(enhancers_annotation_file=module_config.enhancer_cerebellum_file)
-        self.enhancers.load()
+        self.enhancers.load(replace_chr=False)
         self.enhancers.annotate_nearest_gene(self.gff, maxdist=gene_maxdist)
         self.enhancers.filter_nearest_gene_none()
         print("Preparing plotter")

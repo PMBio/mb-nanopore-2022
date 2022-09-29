@@ -1,3 +1,4 @@
+import gzip
 from typing import Optional, Dict, List, Tuple, Union
 
 from pysam import AlignmentFile, AlignedSegment
@@ -41,7 +42,7 @@ def read_variants(vcf_file) -> Dict[str, List[Tuple]]:
             if line.startswith("#"):
                 continue
             line = line.split("\t")
-            chrom, pos, ref, alt = line[0].replace("chr", ""), int(line[1]), line[3], line[4]
+            chrom, pos, ref, alt = line[0], int(line[1]), line[3], line[4]
             if chrom not in variants:
                 variants[chrom] = []
             variants[chrom].append((pos, ref, alt))

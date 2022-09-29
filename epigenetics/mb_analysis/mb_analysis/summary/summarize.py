@@ -14,8 +14,7 @@ from meth5.meth5 import MetH5File, ChromosomeContainer, MethlyationValuesContain
 from mb_analysis.config import module_config
 from mb_analysis.ase_asm_analysis.collective_asm import CollectiveAlleleSpecificMethylation
 from nanoepitools.annotations.annotations import GFFAnnotationsReader, GFFFeature, GeneNameToEnsemblID
-from nanoepiseg.math import nangmean, maxabs
-from mb_analysis.ase_asm_analysis.cnv import load_gene_cnv
+from mb_analysis.ase_asm_analysis.cnv import load_gene_cnv, load_tumor_sample_cnv
 from nanoepitools.pycometh_result import PycomethOutput
 from nanoepitools.annotations.enhancers import Enhancers
 from mb_analysis.summary.plot_gene import Plotter
@@ -151,7 +150,7 @@ def get_diffmet_promoter_primary_relapse(gff, before_tss, after_tss, aggregate=T
     for pm_file in module_config.pycometh_primary_relapse_file_hmm, module_config.pycometh_primary_relapse_file_cgi:
         pm = PycomethOutput(met_comp_file=pm_file)
         promoters_hit = pm.load_promoters_hit(
-            gff, before_tss, after_tss, b_minus_a=True, drop_insignificant=True, pval_threshold=0.05, min_diff=0.5
+            gff, before_tss, after_tss, b_minus_a=True, drop_insignificant=False, pval_threshold=0.05, min_diff=0.5
         )
         for geneid, new_entries in promoters_hit.items():
             if geneid in rows:
@@ -167,14 +166,14 @@ def add_diffmet_promoter_primary_relapse(summary, gff):
     print("=== Differential promoter methylation Primary vs Relapse ===")
     rows = get_diffmet_promoter_primary_relapse(gff, before_tss=2000, after_tss=500)
     summary.add_column(colname="Promoters diffmet (Relapse-Primary)", rows=rows, dtype=float, importance=2)
-    rows = get_diffmet_promoter_primary_relapse(gff, before_tss=30000, after_tss=30000)
-    summary.add_column(colname="30k from TSS diffmet (Relapse-Primary)", rows=rows, dtype=float, importance=1)
+    rows = get_diffmet_promoter_primary_relapse(gff, before_tss=5000, after_tss=5000)
+    summary.add_column(colname="5k from TSS diffmet (Relapse-Primary)", rows=rows, dtype=float, importance=1)
 
 
 def add_diffmet_enhancer_primary_relapse(summary, gff):
     print("=== Differential enhancer methylation Primary vs Relapse ===")
     enhancers = Enhancers(module_config.enhancer_cerebellum_file)
-    enhancers.load()
+    enhancers.load(replace_chr=False)
     enhancers.annotate_nearest_gene(gff, maxdist=3e4)
     enhancers.filter_nearest_gene_none()
     
@@ -182,7 +181,7 @@ def add_diffmet_enhancer_primary_relapse(summary, gff):
     for pm_file in module_config.pycometh_primary_relapse_file_hmm, module_config.pycometh_primary_relapse_file_cgi:
         pm = PycomethOutput(met_comp_file=pm_file)
         enhancers_hit = pm.load_enhancers_hit(
-            enhancers, b_minus_a=True, drop_insignificant=True, pval_threshold=0.1, min_diff=0.5
+            enhancers, b_minus_a=True, drop_insignificant=False, pval_threshold=0.1, min_diff=0.5
         )
         rows.update({k: np.nanmean([hit["diffmet"] for hit in v]) for k, v in enhancers_hit.items()})
     summary.add_column(colname="Enhancer 30k from TSS diffmet (Relapse-Primary)", rows=rows, dtype=float, importance=2)
@@ -260,7 +259,7 @@ def add_gene_fusion(summary, gff):
 def add_breakpoints(summary, gff):
     print("=== Gene body in chromothriptic breakpoint ===")
     breakpoints = ChromothripticBreakpoints(gff)
-    breakpoints.load()
+    breakpoints.load(replace_chr=False)
     breakpoint_col_setting = [
         {"key": "Gene body in breakpoint", "offset": 0, "importance": 1},
         {"key": "Breakpoint within 10k of gene body", "offset": 1e4, "importance": 0.5},
@@ -295,7 +294,7 @@ def add_breakpoints(summary, gff):
 def add_breakpoint_fusion_support(summary, gff):
     print("=== Breakpoint supports fusion ===")
     breakpoints = ChromothripticBreakpoints(gff)
-    breakpoints.load()
+    breakpoints.load(replace_chr=False)
     fusion_series = summary["Fusion targets Primary"]
     idx = ~pd.isnull(fusion_series)
     rows = {}
@@ -345,7 +344,7 @@ def add_breakpoint_fusion_support(summary, gff):
 def add_double_minute(summary, gff):
     print("=== Is on double minute ===")
     rows = {}
-    for coords in DoubleMinuteParts().load():
+    for coords in DoubleMinuteParts().load(replace_chr=False):
         chrom: GFFFeature = gff.chromosomes[coords["chr"]]
         for gene in chrom.get_in_range(coords["start"], coords["end"], max_recursion=0):
             rows[gene.sanitized_id()] = 1
@@ -370,28 +369,50 @@ def add_expression_outliers(summary, gff):
     )
 
 
+def add_tumor_copy_number(summary, gff):
+    copy_numbers = load_tumor_sample_cnv(module_config.tumor_coverage_file, gff)
+    rows_primary = copy_numbers["Primary"].to_dict()
+    rows_relapse = copy_numbers["Relapse"].to_dict()
+    summary.add_column(colname="Normalized Copy Number Primary", rows=rows_primary, dtype=float, importance=0)
+    summary.add_column(colname="Normalized Copy Number Relapse", rows=rows_relapse, dtype=float, importance=0)
+
+
 def add_cnv(summary, gff, vcf_blood):
     print("=== CNV ===")
-    cnv = load_gene_cnv(module_config.cnv_primary_file, vcf_blood, gff)
+    cnv = load_gene_cnv(module_config.cnv_primary_file, vcf_blood, gff, replace_chr=False)
     rows = {gene: counts[0] / sum(counts) for gene, counts in cnv.items() if sum(counts) > 0}
-    summary.add_column(colname="CNV Primary (HP1)", rows=rows, dtype=float)
+    summary.add_column(colname="Allelic CN ratio Primary (HP1)", rows=rows, dtype=float)
     
-    cnv = load_gene_cnv(module_config.cnv_relapse_file, vcf_blood, gff)
+    cnv = load_gene_cnv(module_config.cnv_relapse_file, vcf_blood, gff, replace_chr=False)
     rows = {gene: counts[0] / sum(counts) for gene, counts in cnv.items() if sum(counts) > 0}
-    summary.add_column(colname="CNV Relapse (HP1)", rows=rows, dtype=float)
+    summary.add_column(colname="Allelic CN ratio Relapse (HP1)", rows=rows, dtype=float)
+
+
+def load_gene_ase_primary(vcf_blood, pval_thres=0.05):
+    from nanoepitools.math import fdr_from_pvals
+    
+    ase = ASE(module_config.wasp_ase_file)
+    ase.load(load_exon_annotation=True, pval_thres=None, add_chr=True)
+    ase.assign_counts_to_hp(vcf_blood, "blood")
+    gene_ase = ase.get_per_exon_hp_ratio().groupby("geneid")
+    
+    all_ase = {gene: list(gene_ase.get_group(gene)["hp1_ratio"]) for gene in gene_ase.groups.keys()}
+    
+    ase_maxdev = ase.get_per_exon_hp_ratio_max_effect()
+    ase_maxdev["fdr"] = fdr_from_pvals(ase_maxdev["pval"])
+    if pval_thres is not None:
+        ase_maxdev = ase_maxdev.loc[ase_maxdev["fdr"] < pval_thres]
+    
+    return all_ase, ase_maxdev
 
 
 def add_ase(summary, gff, vcf_blood):
     print("=== ASE ===")
     
-    ase = ASE(module_config.wasp_ase_file)
-    ase.load(load_exon_annotation=True, pval_thres=1)
-    ase.assign_counts_to_hp(vcf_blood, "blood")
-    gene_ase = ase.get_per_exon_hp_ratio().groupby("geneid")
-    
+    all_ase, ase_maxdev = load_gene_ase_primary(vcf_blood)
     summary.add_column(
         colname="ASE HP1 ratio",
-        rows={gene: list(gene_ase.get_group(gene)["hp1_ratio"]) for gene in gene_ase.groups.keys()},
+        rows=all_ase,
         dtype=object,
         importance=1,
         pretty_print_fun=pretty_print_iterable,
@@ -399,10 +420,7 @@ def add_ase(summary, gff, vcf_blood):
     
     summary.add_column(
         colname="ASE HP1 ratio maxdev",
-        rows={
-            gene: max(list(gene_ase.get_group(gene)["hp1_ratio"]), key=lambda x: abs(x - 0.5))
-            for gene in gene_ase.groups.keys()
-        },
+        rows=ase_maxdev["hp1_ratio"].to_dict(),
         dtype=object,
         importance=0,
     )
@@ -424,7 +442,7 @@ def ase_asm_importance_function(row):
 
     """
     ase = row["ASE HP1 ratio maxdev"]
-    cnv = row["CNV Primary (HP1)"]
+    cnv = row["Allelic CN ratio Primary (HP1)"]
     if np.isnan(ase):
         return 0
     
@@ -515,6 +533,8 @@ def build_summary(gff, columns="all"):
     
     vcf_blood = None
     
+    
+    
     if columns == "all" or "diffmet_promoter" in columns:
         add_diffmet_promoter_primary_relapse(summary, gff)
     
@@ -537,6 +557,9 @@ def build_summary(gff, columns="all"):
             vcf_blood = load_vcf_blood()
         add_cnv(summary, gff, vcf_blood)
     
+    if columns == "all" or "copy_number" in columns:
+        add_tumor_copy_number(summary, gff)
+        
     if columns == "all" or "expression_outlier" in columns:
         add_expression_outliers(summary, gff)
     
@@ -592,4 +615,59 @@ if __name__ == "__main__":
     summary_met.to_csv(module_config.grand_summary_file_methylation, sep="\t", min_importance=-100)
     
     summary = build_summary(gff)
-    summary.to_csv(module_config.grand_summary_file, sep="\t")
+    summary.to_csv(module_config.grand_summary_file, sep="\t", min_importance=-100)
+    
+    print("Quickly compute enrichment of main drivers in dmr:")
+    n_dmr_driver = (
+        ~summary_met.summary["5k from TSS diffmet (Relapse-Primary)"].isna()
+        & ~summary_met.summary["Main Drivers"].isnull()
+    ).sum()
+    n_drivers = (~summary_met.summary["Main Drivers"].isnull()).sum()
+    n_dmr = (~summary_met.summary["5k from TSS diffmet (Relapse-Primary)"].isnull()).sum()
+    num_genes = sum(1 for c in gff.chromosomes.values() for g in c.children)
+    
+    import scipy
+    
+    n_dmr_notdrivr = n_dmr - n_dmr_driver
+    n_notdmr_driver = n_drivers - n_dmr_driver
+    n_notdmr_notdriver = num_genes - n_notdmr_driver - n_dmr_notdrivr + n_dmr_driver
+    print(
+        scipy.stats.fisher_exact(
+            [[n_dmr_driver, n_dmr_notdrivr], [n_notdmr_driver, n_notdmr_notdriver]], alternative="two-sided"
+        )
+    )
+    
+    indicated_in_medulloblastoma = (
+        ~summary.summary["Main Drivers"].isna()
+        | ~summary.summary["SHH Amplified"].isna()
+        | ~summary.summary["SHH Deleted"].isna()
+        | ~summary.summary["Drug target"].isna()
+        | ~summary.summary["MB Amplified"].isna()
+        | ~summary.summary["MB Deleted"].isna()
+        | ~summary.summary["cosmic_has_mutation"].isna()
+    )
+    print(
+        "Primary ASE indicated in MB: ",
+        (~summary.summary.loc[indicated_in_medulloblastoma]["ASE HP1 ratio maxdev"].isna()).sum(),
+    )
+    
+    idx = ~summary.summary["ASE HP1 ratio maxdev"].isna()
+    
+    def cnv_explains_ase(row):
+        is_pos = (row["Allelic CN ratio Primary (HP1)"] > 0.65) & (row["ASE HP1 ratio maxdev"] > 0.5)
+        is_neg = (row["Allelic CN ratio Primary (HP1)"] < 0.35) & (row["ASE HP1 ratio maxdev"] < 0.5)
+        return is_pos or is_neg
+    
+    ase_cnv = summary.summary.loc[idx][["ASE HP1 ratio maxdev", "Allelic CN ratio Primary (HP1)"]].apply(cnv_explains_ase, axis=1)
+    
+    num_ase = idx.sum()
+    num_cnv = summary.summary["Allelic CN ratio Primary (HP1)"].map(lambda x: abs(x - 0.5) > 0.15).sum()
+    num_ase_cnv = ase_cnv.sum()
+    num_ase_not_cnv = num_ase - num_ase_cnv
+    num_cnv_not_ase = num_cnv - num_ase_cnv
+    num_genes = summary.summary.shape[0]
+    num_not_ase_not_cnv = num_genes - num_ase_not_cnv - num_cnv_not_ase - num_ase_cnv
+    
+    scipy.stats.fisher_exact(
+        [[num_ase_cnv, num_ase_not_cnv], [num_cnv_not_ase, num_not_ase_not_cnv]], alternative="two-sided"
+    )

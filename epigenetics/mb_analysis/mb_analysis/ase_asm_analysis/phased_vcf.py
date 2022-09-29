@@ -112,6 +112,5 @@ class PhasedVCF:
         )
         
         self.vcf_df = pd.DataFrame(vcf_rows)
-        self.vcf_df["chr"] = self.vcf_df["chr"].map(lambda x: x.replace("chr", ""))
         self.vcf_df = self.vcf_df.set_index(["chr", "pos", "ALT"])
         self.vcf_df = self.vcf_df.sort_index()
