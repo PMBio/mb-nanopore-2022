@@ -16,4 +16,4 @@ Long-read sequencing of diagnosis and post-therapy medulloblastoma reveals compl
 
 ## Data
 
-Associated sequencing data have been deposited at the European Genome-phenome Archive under the accession number EGAS00001006576 and EGAS00001006629.
+Associated sequencing data have been deposited at the European Genome-phenome Archive under the accession number EGAS00001006576.
