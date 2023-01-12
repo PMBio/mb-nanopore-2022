@@ -1,0 +1,157 @@
+import os
+import sys
+import shutil
+import subprocess
+
+from modusa.diskusage import check_free_space, compute_total_file_size_gb
+
+if "use_gpu_for_guppy" not in globals().keys():
+    use_gpu_for_guppy = True
+
+if "scratch_dir" not in globals().keys():
+    scratch_dir=os.path.join(basedir,'tmp')
+
+if "jobid_env_var" not in globals().keys():
+    jobid_env_var="LSB_JOBID"
+
+if "guppy_model" not in globals().keys():
+    guppy_model = "dna_r9.4.1_450bps_modbases_5mc_hac.cfg"
+
+class GuppyWrapper:
+    def __init__(self, guppy_dir, scratch_dir=None, batch_size=5, gpu=True, cpu_threads=1):
+        self.guppy = os.path.join(guppy_dir,'bin','guppy_basecaller')
+        self.scratch_dir = scratch_dir
+        self.batch_size=batch_size
+        self.gpu=gpu
+        self.cpu_threads = cpu_threads
+
+    def run_guppy(self, indir, outdir):
+        if self.gpu:
+            guppy_command = f"{self.guppy} --input_path {indir} --save_path {outdir} --device auto " \
+                    f"--config {guppy_model} --gpu_runners_per_device 1 " \
+                    "--fast5_out".split(' ')
+        else:
+            guppy_command = f"{self.guppy} --input_path {indir} --save_path {outdir} " \
+                    f"--config {guppy_model} --num_callers {self.cpu_threads} " \
+                    "--fast5_out".split(' ')
+        print(guppy_command)
+        p = subprocess.Popen(guppy_command, stdout=subprocess.PIPE)
+
+        for line in p.stdout:
+            print('Guppy: ' + line.decode('UTF-8'))
+        print("Guppy done")
+        p.wait()
+
+    def run_guppy_batchwise_from_filelist(self, fast5files, outputdir):
+        LSB_JOBID=os.getenv(jobid_env_var)
+
+        # Filter out files we already basecalled, so we don't do it twice
+        #if os.path.exists(outputdir):
+        #    done_files = os.listdir(outputdir)
+        #    print('Found %d fast5files. %d files are already basecalled' % (len(fast5files), len(done_files)))
+        #    fast5files = [f for f in fast5files if not f in done_files]
+        #    print('Need to basecall %d files' % len(fast5files))
+
+        batches = [fast5files[i:(i+self.batch_size)] for i in range(0,len(fast5files), self.batch_size)]
+
+        ssd_dir = os.path.join(self.scratch_dir, LSB_JOBID)
+        ssd_in=os.path.join(ssd_dir, 'input')
+        ssd_out=os.path.join(ssd_dir ,'output')
+
+        for batch_i in range(len(batches)):
+            try:
+                print("Copying data to SSD (batch %d from %d)" % (batch_i, len(batches)))
+                os.makedirs(ssd_in, exist_ok=True)
+                os.makedirs(ssd_out, exist_ok=True)
+                batch = batches[batch_i]
+
+                for f in batch:
+                    print("Copying ", f)
+                    shutil.copyfile(f, os.path.join(ssd_in,os.path.basename(f)))
+                self.run_guppy(ssd_in, ssd_out)
+
+                # The directory where guppy stores the basecalled fast5 files, since we
+                # are only really interested in those and not so much the fastq files
+                basecalled_fast5_dir = os.path.join(ssd_out, 'workspace')
+                print("Creating ", outputdir)
+                os.makedirs(outputdir, exist_ok=True)
+                print("Copying result to %s" % outputdir)
+                for f in os.listdir(basecalled_fast5_dir):
+                    shutil.copyfile(os.path.join(basecalled_fast5_dir, f), os.path.join(outputdir, f))
+
+                print("Cleaning up %s" % ssd_out)
+            finally:
+                shutil.rmtree(ssd_dir)
+
+    def run_guppy_batchwise(self, inputdir, outputdir):
+        fast5files = [os.path.join(inputdir, f) for f in os.listdir(inputdir) if f.endswith('fast5')]
+        self.run_guppy_batchwise_from_filelist(fast5files, outputdir)
+
+'''
+##############################################################################
+# GUPPY basecalling
+##############################################################################
+'''
+
+num_batches = 16
+
+def guppy_basecall_batches(wc):
+    sample = wc["sample"]
+    batch = int(wc["batch"])
+    inputdir = os.path.join(basedir,'raw', sample,'original')
+    fast5files = sorted([os.path.join(inputdir, f) for f in os.listdir(inputdir) if f.endswith('fast5')])
+    return fast5files[batch::num_batches]
+
+checkpoint guppy_basecall_from_filelist:
+    input: guppy_basecall_batches
+    output: directory(os.path.join(basedir, "raw", "{sample}", "guppy_intermediate", "b_{batch}/"))
+    params:
+        jobname='guppy_{sample}_{batch}',
+        runtime='48:00',
+        memusage='8000' if use_gpu_for_guppy else "32000",
+        slots='8' if use_gpu_for_guppy else "32",
+        misc = gpu_params if use_gpu_for_guppy else ""
+        #misc=''
+    run:
+        gw = GuppyWrapper(guppy_dir,scratch_dir=scratch_dir,batch_size=5,gpu=use_gpu_for_guppy,cpu_threads=int(params.slots))
+        gw.run_guppy_batchwise_from_filelist(input, output[0])
+
+def guppy_basecall_batches_map_back(wc):
+    sample = wc["sample"]
+    filename = wc["filename"]
+    inputdir = os.path.join(basedir,'raw', sample,'original')
+    if os.path.isdir(inputdir):
+        fast5files = sorted([f for f in os.listdir(inputdir) if f.endswith('fast5')])
+        batch = fast5files.index(filename)%num_batches
+        #return os.path.join(basedir, "raw", sample, "guppy_intermediate", f"b_{batch}", filename)
+        return checkpoints.guppy_basecall_from_filelist.get(sample=sample, batch=batch).output[0]
+    else:
+        return []
+
+rule move_guppy_basecall_from_batchdir:
+    input: guppy_basecall_batches_map_back
+    output: os.path.join(basedir, "raw", "{sample}", "guppy", "{filename}")
+    shell: "mv {input}/{wildcards.filename} {output}"
+
+def all_basecall_from_filelist_input(wc):
+    for sample in unique_samples:
+        original_dir = os.path.join(basedir, "raw", sample, "original")
+        if not os.path.isdir(original_dir):
+            continue
+        inpath = Path(basedir).joinpath("raw", sample, "original")
+        fast5s = [f for f in inpath.iterdir() if f.name.endswith("fast5")]
+        total_size = compute_total_file_size_gb(fast5s)
+
+        #Rudimentary check for free space. We need to make sure that there is enough space for all samples,
+        #but we also need to check for all samples because they might write to different mountpoints, depending
+        #on how symlinks are set
+        outdir = check_free_space(Path(basedir).joinpath("raw", sample, "guppy"), total_size * 4 * len(unique_samples))
+
+        for f in fast5s:
+            yield outdir.joinpath(f.name)
+
+rule all_basecall:
+    input: all_basecall_from_filelist_input
+
+localrules: move_guppy_basecall_from_batchdir
+

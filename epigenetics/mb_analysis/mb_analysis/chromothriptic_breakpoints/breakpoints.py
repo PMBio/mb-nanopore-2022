@@ -139,10 +139,11 @@ class ChromothripticBreakpoints:
             self.bp_edges[frozenset(edge[0].items()), frozenset(edge[1].items())] = 1
             self.bp_edges[frozenset(edge[1].items()), frozenset(edge[0].items())] = 1
     
-    def load(self) -> ChromothripticBreakpoints:
+    def load(self, replace_chr=True) -> ChromothripticBreakpoints:
         self.breakpoint_df = pd.read_csv(module_config.ct_breakpoints_file, sep="\t")
-        self.breakpoint_df["query.chr"] = self.breakpoint_df["query.chr"].map(lambda x: x.replace("chr", ""))
-        self.breakpoint_df["query.chr2"] = self.breakpoint_df["query.chr2"].map(lambda x: x.replace("chr", ""))
+        if replace_chr:
+            self.breakpoint_df["query.chr"] = self.breakpoint_df["query.chr"].map(lambda x: x.replace("chr", ""))
+            self.breakpoint_df["query.chr2"] = self.breakpoint_df["query.chr2"].map(lambda x: x.replace("chr", ""))
         self.__build_graph()
         return self
     

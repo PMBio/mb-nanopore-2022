@@ -22,7 +22,7 @@ class CollectiveAlleleSpecificMethylation:
         self.samples = samples
         self.gff = gff
         self.enhancers = Enhancers(module_config.enhancer_cerebellum_file)
-        self.enhancers.load()
+        self.enhancers.load(replace_chr=False)
         self.enhancers.annotate_nearest_gene(gff, maxdist=3e4)
         self.enhancers.filter_nearest_gene_none()
     
@@ -37,7 +37,7 @@ class CollectiveAlleleSpecificMethylation:
             h5.__exit__(*args)
     
     def is_sufficient_effect(self, bs_diff):
-        return np.abs(bs_diff) > 0.5
+        return np.abs(bs_diff) > 0.25
     
     def get_diffmet_for_region(self, chromosome: str, start: int, end: int, min_sites_per_region=5):
         sample_diff_met = {}
@@ -46,23 +46,25 @@ class CollectiveAlleleSpecificMethylation:
             hp_betascore = values_container.get_llr_site_readgroup_aggregate(
                 group_key="haplotype", aggregation_fun=compute_betascore
             )
-            if 1 in hp_betascore and 2 in hp_betascore:
-                common_sites = {(x, y) for x, y in hp_betascore[2][1]}.intersection(
-                    {(x, y) for x, y in hp_betascore[1][1]}
-                )
-                mask_common_sites = {hp: [(x, y) in common_sites for x, y in hp_betascore[hp][1]] for hp in {1, 2}}
-                site_beta_scores = {hp: hp_betascore[hp][0][mask_common_sites[hp]] for hp in {1, 2}}
-                # Remove nans (which occur when llrs are close to 0
-                site_beta_scores = {hp: site_beta_scores[hp][~np.isnan(site_beta_scores[hp])] for hp in {1, 2}}
-                cur_diff_met = np.nanmean(site_beta_scores[2]) - np.nanmean(site_beta_scores[1])
-                if (
-                    len(site_beta_scores[1]) >= min_sites_per_region
-                    and len(site_beta_scores[1]) >= min_sites_per_region
-                    and self.is_sufficient_effect(cur_diff_met)
-                ):
-                    sample_diff_met[sample] = cur_diff_met
-                else:
-                    sample_diff_met[sample] = np.nan
+            rg_names = dict(h5.h5_fp["reads"]["read_groups"]["haplotype"].attrs)
+            rg_ids = {v:int(k) for k,v in rg_names.items()}
+            if not rg_ids["H1"] in hp_betascore or not rg_ids["H2"] in hp_betascore:
+                sample_diff_met[sample] = np.nan
+                continue
+            common_sites = {(x, y) for x, y in hp_betascore[rg_ids["H2"]][1]}.intersection(
+                {(x, y) for x, y in hp_betascore[rg_ids["H1"]][1]}
+            )
+            mask_common_sites = {hp: [(x, y) in common_sites for x, y in hp_betascore[hp][1]] for hp in {rg_ids["H1"] , rg_ids["H2"]}}
+            site_beta_scores = {hp: hp_betascore[hp][0][mask_common_sites[hp]] for hp in {rg_ids["H1"] , rg_ids["H2"] }}
+            # Remove nans (which occur when llrs are close to 0
+            site_beta_scores = {hp: site_beta_scores[hp][~np.isnan(site_beta_scores[hp])] for hp in {rg_ids["H1"] , rg_ids["H2"] }}
+            cur_diff_met = np.nanmean(site_beta_scores[rg_ids["H2"]]) - np.nanmean(site_beta_scores[rg_ids["H1"]])
+            if (
+                len(site_beta_scores[rg_ids["H1"] ]) >= min_sites_per_region
+                and len(site_beta_scores[rg_ids["H1"] ]) >= min_sites_per_region
+                and self.is_sufficient_effect(cur_diff_met)
+            ):
+                sample_diff_met[sample] = cur_diff_met
             else:
                 sample_diff_met[sample] = np.nan
         return sample_diff_met
@@ -74,12 +76,12 @@ class CollectiveAlleleSpecificMethylation:
         
         if annotation == "promoters":
             gene_hits = pm.load_promoters_hit(
-                self.gff, 2000, 500, b_minus_a=True, drop_insignificant=True, pval_threshold=0.05, min_diff=min_diff
+                self.gff, 2000, 500, b_minus_a=True, drop_insignificant=False, pval_threshold=0.05, min_diff=min_diff
             )
         
         elif annotation == "enhancers":
             gene_hits = pm.load_enhancers_hit(
-                self.enhancers, b_minus_a=True, drop_insignificant=True, pval_threshold=0.05, min_diff=min_diff
+                self.enhancers, b_minus_a=True, drop_insignificant=False, pval_threshold=0.05, min_diff=min_diff
             )
         
         with tqdm.tqdm(total=len(gene_hits)) as pbar:

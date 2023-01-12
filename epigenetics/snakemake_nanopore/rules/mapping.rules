@@ -1,0 +1,147 @@
+'''
+##############################################################################
+# Mapping using minimap2
+##############################################################################
+
+This rule will map fastq file for a single sample and batch to the reference. 
+
+Output will be stored in the "mapping" directory as a bam file including a 
+bai index file.
+
+The following steps are performed:
+  - Alignment
+  - Filter only unique mappings
+  - Sort bam file
+  - Create bam index
+'''
+
+
+
+if "mapping_filter_params" not in globals().keys():
+    mapping_filter_params = ""
+
+if "filter_chroms" not in globals().keys():
+    filter_chroms = False
+
+if "keep_unfiltered_bam" not in globals().keys():
+    keep_unfiltered_bam = False
+
+def alignment_filter_script():
+    script = ""
+    if mapping_filter_params != "" or filter_chroms:
+        chrom_filter_string = " ".join(chroms) if filter_chroms else ""
+        script += """
+        
+        """
+    return script
+
+rule alignment:
+    input: rules.fast5_to_fastq.output.fq
+    output: bam=temp(os.path.join(basedir,'mapping/{sample}/{batch}.sorted.unfiltered.bam'))
+    params:
+        jobname='align_{sample}_{batch}',
+        runtime='02:00',
+        memusage='16000',
+        slots='8',
+        misc=''
+    shell: "{minimap2} -t {params.slots} -a -x map-ont -L {reference} {input} --MD | {samtools} view -b | {samtools} sort -@ {params.slots} -T {output}.tmp -o {output}"
+
+rule filter_alignment:
+    input: bam = rules.alignment.output.bam,
+           bai= rules.alignment.output.bam + ".bai"
+    output: bam = os.path.join(basedir,'mapping/{sample}/{batch}.sorted.filtered.bam')
+    params:
+        chrom_filter_string = " ".join(chroms) if filter_chroms else "",
+        jobname='align_{sample}_{batch}',
+        runtime='02:00',
+        memusage='8000',
+        slots='1',
+        misc=''
+    shell: "{samtools} view {mapping_filter_params} {input.bam} {params.chrom_filter_string} -b > {output.bam}"
+
+rule all_alignment:
+    input: expand(rules.filter_alignment.output.bam, zip_combinator, sample=sbf.sb_samples, batch=sbf.sb_batches)
+
+rule samtools_index:
+    output: "{filename}.bam.bai"
+    input: "{filename}.bam"
+    params:
+        jobname='samtools_index',
+        runtime='02:00',
+        memusage='8000',
+        slots='1',
+        misc=''
+    shell: "{samtools} index {input}"
+'''
+##############################################################################
+# Merging of BAM files
+##############################################################################
+
+In case you need a single bam file for one sample (e.g. for SV calling), this 
+rule performs the merging and re-sorting of bam files. The 
+prepare_mergebams_input function returns the list of bam files, which will 
+then in an intermediate step be saved to a txt. 
+
+The following steps are performed:
+ - Create filelist file
+ - Merge using samtools merge
+ - Use calmd to re-generate the MD tag for the merged bam file
+ - Re-sort using samtools sort  (not sure if this is necessary after merge)
+'''
+def prepare_mergebams_input(wildcards):
+    return expand((os.path.join(basedir, 'mapping', '{sample}', 
+        '{batch}.sorted.filtered.bam')), 
+        batch=samplebatches(wildcards.sample), sample=wildcards.sample)
+
+rule prepare_mergebams:
+    input: prepare_mergebams_input
+    output: os.path.join(basedir, 'mapping/{sample}.bam.filelist.txt')
+    shell: 'echo {input} | sed \'s/ /\\n/g\' > {output}'
+
+rule mergebams:
+    input: rules.prepare_mergebams.output
+    output: os.path.join(basedir, 'mapping/{sample}.sorted.bam')
+    params:
+        jobname='mergebam_{sample}',
+        runtime='24:00',
+        memusage='16000',
+        slots='1',
+        misc=''
+    shell: '''
+           {samtools} merge -b {input} - | {samtools} calmd -b - {reference} | {samtools} addreplacerg -r "@RG\tID:{wildcards.sample}" --output-fmt BAM - > {output}
+           '''
+
+def prepare_mergebams_unfiltered_input(wildcards):
+    return expand((os.path.join(basedir, 'mapping', '{sample}',
+        '{batch}.sorted.unfiltered.bam')),
+        batch=samplebatches(wildcards.sample), sample=wildcards.sample)
+
+rule prepare_mergebams_unfiltered:
+    input: prepare_mergebams_unfiltered_input
+    output: os.path.join(basedir, 'mapping/{sample}.bam.unfiltered.filelist.txt')
+    run:
+        with open(output[0], "w") as f:
+            for infile in input:
+                f.write(f"{infile}\n")
+
+rule mergebams_unfiltered:
+    input: rules.prepare_mergebams_unfiltered.output
+    output: os.path.join(basedir, 'mapping/{sample}.sorted.unfiltered_merged.bam')
+    params:
+        jobname='mergebam_{sample}',
+        runtime='24:00',
+        memusage='16000',
+        slots='1',
+        misc=''
+    shell: '''
+           {samtools} merge -b {input} - | {samtools} calmd -b - {reference} | {samtools} addreplacerg -r "@RG\tID:{wildcards.sample}" --output-fmt BAM - > {output}
+           '''
+
+rule all_mergebams:
+    input: expand(rules.mergebams.output, sample=unique_samples),
+           expand(rules.mergebams_unfiltered.output, sample=unique_samples) if keep_unfiltered_bam else []
+
+rule all_mergebams_unfiltered:
+    input: expand(rules.mergebams_unfiltered.output, sample=unique_samples) if keep_unfiltered_bam else []
+
+localrules: prepare_mergebams_unfiltered, prepare_mergebams

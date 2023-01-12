@@ -1,0 +1,44 @@
+from pathlib import Path
+
+rule whatshap_haplotag:
+    input: vcf = Path(basedir).joinpath("svs","{sample}_phased.bcf"),
+           bam = rules.filter_alignment.output.bam
+    output: Path(basedir).joinpath("whatshap","{sample}","haplotags_{batch}.tsv")
+    params:
+        jobname='whatshap_haplotag_{sample}_{batch}',
+        runtime='4:00',
+        memusage='8000',
+        slots='2',
+        misc = ""
+    shell: "{whatshap} haplotag -r {reference} --output-haplotag-list {output} --ignore-read-groups {input.vcf} {input.bam} > /dev/null"
+
+
+rule whatshap_haplotag_merge:
+    input: lambda wildcards: expand(rules.whatshap_haplotag.output, batch=samplebatches(wildcards.sample), sample=wildcards.sample)
+    output: Path(basedir).joinpath("whatshap","haplotags_{sample}.tsv")
+    params:
+        jobname='whatshap_merge_{sample}',
+        runtime='1:00',
+        memusage='8000',
+        slots='1',
+        misc=""
+    shell: """echo "read_name\tgroup" > {output} && cat {input} | grep -v "#" | sort -k4,4  | cut -f 1,2 >> {output}"""
+
+rule all_whatshap_haplotag_merge:
+    input: expand(rules.whatshap_haplotag_merge.output, sample=unique_samples)
+
+
+rule meth5_tag_haplotype:
+    input: haplotags = rules.whatshap_haplotag_merge.output,
+           m5 = rules.merge_met_hdf5.output
+    output: rules.merge_met_hdf5.output[0] + ".hptagged"
+    params:
+        jobname='meth5_haplotag_{sample}_{mettype}',
+        runtime='1:00',
+        memusage='8000',
+        slots='1',
+        misc=""
+    shell: """{meth5}  annotate_reads --m5file {input.m5} --read_groups_key haplotype --read_group_file {input.haplotags} && touch {output}"""
+
+rule all_meth5_tag_haplotype:
+    input: expand(rules.meth5_tag_haplotype.output, sample=unique_samples, mettype=mettypes)

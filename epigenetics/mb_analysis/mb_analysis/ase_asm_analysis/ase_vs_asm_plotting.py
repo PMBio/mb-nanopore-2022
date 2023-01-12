@@ -73,7 +73,7 @@ def plot_ase_vs_asm_nosplit(
         x = -x
     y = np.array(ase)
     for xval, yval, label in zip(x, y, labels):
-        plt.text(xval + 0.01, yval, label, fontsize=10, va="center")
+        plt.text(xval + 0.01, yval, label, fontsize=10, va="center", fontname="Arial")
     
     if colors is None:
         colors = ["b" for _ in x]

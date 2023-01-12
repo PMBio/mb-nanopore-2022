@@ -2,7 +2,7 @@ import scipy
 import numpy as np
 import pandas as pd
 
-from nanoepiseg.math import fdr_from_pvals
+from nanoepitools.math import fdr_from_pvals
 from mb_analysis.config import module_config
 
 
@@ -18,17 +18,18 @@ class OutlierAnalysisResults:
     def __init__(self):
         self.outlier_df = None
     
-    def load(self):
+    def load(self, filter=True):
         self.outlier_df = pd.read_csv(module_config.outlier_analysis_result_file, sep="\t", index_col="Gene.id")
         # Remove genes for which we have no expression
-        self.outlier_df = self.outlier_df.loc[
-            self.outlier_df.apply(
-                lambda x: any(
-                    x[f"Exp.{sampleid} (log2(tpm))"] > 0 for sampleid in module_config.sample_id_dict_rna.values()
-                ),
-                axis=1,
-            )
-        ].copy()
+        if filter:
+            self.outlier_df = self.outlier_df.loc[
+                self.outlier_df.apply(
+                    lambda x: any(
+                        x[f"Exp.{sampleid} (log2(tpm))"] > 0 for sampleid in module_config.sample_id_dict_rna.values()
+                    ),
+                    axis=1,
+                )
+            ].copy()
         # Remove versioning of gene id
         self.outlier_df.index = self.outlier_df.index.map(lambda x: x.split(".")[0])
         

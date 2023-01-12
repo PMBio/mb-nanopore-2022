@@ -1,3 +1,4 @@
+import tqdm
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,13 +16,11 @@ from nanoepitools.plotting.general_plotting import PlotArchiver
  computed from the longer mappings / better methylation calls.
 """
 
-pa = PlotArchiver("supplementary_figures", config={"plot_archive_dir": "/homes/snajder/data1/plots_medulloblastoma"})
+pa = PlotArchiver("supplementary_figures", config=module_config)
 
 df = pd.read_csv(module_config.templated_insertions_bed_file_nov2021, sep="\t")
-df["chr"] = df["chr"].map(lambda x: x.replace("chr", ""))
 
 f = MetH5File(module_config.meth5_template_file.format(sample="Primary"), "r")
-
 
 df = df.groupby("clusterid")
 
@@ -56,14 +55,25 @@ with pa.open_multipage_pdf("templated_insertions_methylation_rate"):
         all_ti_bs_plot = []
         all_non_ti_bs_plot = []
         pa.figure()
-        fti = MetH5File(module_config.templated_insertions_meth5_path, "r")
+        fti = MetH5File(module_config.templated_insertions_meth5_path+".broken", "r")
         for chrom in fti.get_chromosomes():
+            print(chrom)
             val = fti[chrom].get_all_values()
-            read_names = val.get_read_names()
-            for ti_i, (non_ti_bs, ti_readnames) in enumerate(zip(all_non_ti_bs, all_ti_readnames)):
+            
+            if chrom == "tig00000002":
+                # Sorry, we had some file corruption there. This is a workaround
+                llrs = np.array(list(fti.h5_fp["chromosomes"]["tig00000002"]["llr"][:485]) + [0, 0, 0, 0, 0]+ list(fti.h5_fp["chromosomes"]["tig00000002"]["llr"][490:]))
+            else:
+                llrs = val.get_llrs()
+
+            print("Getting read names")
+            rn_mapping = fti.h5_fp["reads/read_names_mapping"][()]
+            read_names = np.array([rn.decode() for rn in rn_mapping[val.get_read_ids()]])
+            print("Getting met rates")
+            for ti_i, (non_ti_bs, ti_readnames) in tqdm.tqdm(list(enumerate(zip(all_non_ti_bs, all_ti_readnames)))):
                 idx_ti = np.array([r in ti_readnames for r in read_names])
+                print(idx_ti.sum())
                 if idx_ti.sum() > 0:
-                    llrs = val.get_llrs()
                     all_ti_bs_plot.append(compute_betascore(llrs[idx_ti]))
                     all_non_ti_bs_plot.append(non_ti_bs)
         

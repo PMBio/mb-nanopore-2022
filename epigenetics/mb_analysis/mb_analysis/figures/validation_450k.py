@@ -14,6 +14,17 @@ from meth5.meth5 import MetH5File
 from mb_analysis.config import module_config
 
 
+def plot_2d_density(x, y, nbins=50, cmap=plt.cm.BuGn_r, contour_colors="k"):
+    k = scipy.stats.gaussian_kde((x, y))
+    xi, yi = np.mgrid[x.min(): x.max(): nbins * 1j, y.min(): y.max(): nbins * 1j]
+    zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+    print(min(zi), max(zi))
+    plt.pcolormesh(xi, yi, zi.reshape(xi.shape), shading="gouraud", cmap=cmap)
+    plt.colorbar()
+    plt.contour(xi, yi, zi.reshape(xi.shape), colors=contour_colors)
+
+
+
 def get_sample_correlation(sample, llr_threshold=2.0):
     """
     Reads 450k array data and then matches probe methylation rates with methylation rates from nanopore
@@ -46,9 +57,6 @@ if __name__ == "__main__":
     met_450k_manifest = pd.read_csv(path_450k_metadata, sep="\t").set_index("probeID", drop=True)
     
     cpg_coord_mapping = met_450k_manifest[["CpG_chrm", "CpG_beg", "CpG_end"]].copy()
-    cpg_coord_mapping["CpG_chrm"] = cpg_coord_mapping["CpG_chrm"].map(
-        lambda x: x.replace("chr", "") if isinstance(x, str) else x
-    )
     
     met_450k = met_450k.merge(cpg_coord_mapping, left_index=True, right_index=True)
     
@@ -66,11 +74,12 @@ if __name__ == "__main__":
             pa.figure()
             plt.title(f"Nanopore vs 450k Array methylation rate {sample}")
             plot_2d_density(sample_xy[sample][idx, 1], sample_xy[sample][idx, 0], cmap="jet", contour_colors="w")
+            #plt.scatter(sample_xy[sample][idx, 1], sample_xy[sample][idx, 0], s=1)
             plt.xlabel("Nanopore")
             plt.ylabel("450k Array")
             plt.xlim(0, 1)
             plt.ylim(0, 1)
-            plt.axes().set_aspect("equal")
+            plt.gca().set_aspect("equal")
             pa.savefig()
             
             r = scipy.stats.pearsonr(sample_xy[sample][idx, 0], sample_xy[sample][idx, 1])[0]

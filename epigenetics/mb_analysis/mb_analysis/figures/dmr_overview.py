@@ -17,7 +17,7 @@ simply done with short read bisulfite sequencing, due to distance from SNVs
 """
 
 
-def load_asm_hits(samples):
+def load_asm_hits(samples, min_diff):
     asm_files = {
         sample: module_config.pycometh_haplotype_sample_template_file.format(sample=sample)
         for sample in module_config.samples
@@ -29,7 +29,7 @@ def load_asm_hits(samples):
         hits = [
             {"chrom": line["chromosome"], "start": line["start"], "end": line["end"], "diff": line["diff"]}
             for line in pm_asm.read_file(
-                b_minus_a=True, drop_insignificant=True, pval_threshold=0.05, min_diff=min_diff
+                b_minus_a=True, drop_insignificant=False, pval_threshold=0.05, min_diff=min_diff
             )
         ]
         hits = merge_duplicate_diffmet_hits(hits)
@@ -37,7 +37,7 @@ def load_asm_hits(samples):
     return asm_hits
 
 
-def annotate_asm_hits(asm_hits):
+def annotate_asm_hits(asm_hits, vcf_df_grouped, ref_cpgs):
     new_asm_hits = {}
     for sample, hits in asm_hits.items():
         # Check distance to nearest SNV
@@ -68,6 +68,7 @@ def annotate_asm_hits(asm_hits):
     return new_asm_hits
 
 
+
 if __name__ == "__main__":
     pa = PlotArchiver("summary", config=module_config)
     
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         pm = PycomethOutput(met_comp_file=pm_file)
         samplecomp_hits += [
             {"chrom": line["chromosome"], "start": line["start"], "end": line["end"], "diff": line["diff"]}
-            for line in pm.read_file(b_minus_a=True, drop_insignificant=True, pval_threshold=0.05, min_diff=min_diff)
+            for line in pm.read_file(b_minus_a=True, drop_insignificant=False, pval_threshold=0.05, min_diff=min_diff)
         ]
     
     samplecomp_hits = merge_duplicate_diffmet_hits(samplecomp_hits)
@@ -113,8 +114,8 @@ if __name__ == "__main__":
     
     """ Load ASM"""
     sample_order = ("Primary", "Relapse")
-    asm_hits = load_asm_hits(sample_order)
-    asm_hits = annotate_asm_hits(asm_hits)
+    asm_hits = load_asm_hits(sample_order, min_diff)
+    asm_hits = annotate_asm_hits(asm_hits, vcf_df_grouped, ref_cpgs)
     
     with pa.open_multipage_pdf("snv_dist_to_asm"):
         num_bps_sample_diffmet = len({cpg for hit in samplecomp_hits for cpg in hit["CpGs"]})

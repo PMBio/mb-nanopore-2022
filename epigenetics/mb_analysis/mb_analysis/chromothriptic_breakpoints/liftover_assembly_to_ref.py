@@ -11,9 +11,8 @@ class LiftoverAssemblyToRef:
     def __init__(self):
         pass
 
-    def load(self):
-        self.paf_df = pd.read_csv(
-            module_config.assembly_to_ref_paf,
+    def load(self, paf_file, replace_chr=True):
+        self.paf_df = pd.read_csv(paf_file,
             sep="\t",
             usecols=[0, 2, 3, 4, 5, 7, 8],
             names=["a_contig", "a_start", "a_end", "dir", "r_chr", "r_start", "r_end"],
@@ -28,7 +27,8 @@ class LiftoverAssemblyToRef:
                 "qual": int,
             },
         )
-        self.paf_df["r_chr"] = self.paf_df["r_chr"].map(lambda x: x.replace("chr", ""))
+        if replace_chr:
+            self.paf_df["r_chr"] = self.paf_df["r_chr"].map(lambda x: x.replace("chr", ""))
 
     def ref_to_assembly(self, chr: str, start: int, end: int):
         r_chr = self.paf_df.groupby("r_chr").get_group(chr)

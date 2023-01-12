@@ -10,7 +10,7 @@ if __name__ == "__main__":
     
     asm_file = module_config.pycometh_haplotype_sample_template_file.format(sample="Primary")
     pm_asm = PycomethOutput(met_comp_file=asm_file)
-    hits = list(pm_asm.read_file(b_minus_a=True, drop_insignificant=True, pval_threshold=0.05, min_diff=0.5))
+    hits = list(pm_asm.read_file(b_minus_a=True, drop_insignificant=False, pval_threshold=0.05, min_diff=0.5))
     hits = merge_duplicate_diffmet_hits(hits)
     
     """ Compute how many DMRs discovered in primary can be confirmed in relapse """

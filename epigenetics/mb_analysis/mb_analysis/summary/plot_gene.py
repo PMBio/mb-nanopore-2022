@@ -286,19 +286,19 @@ class Plotter:
         show_has_value_indicator=True,
         segment=None,
         vlines_in_coord_space=None,
-        hold=False,
+        hold=False, requires_read_names_for_sample_name_fun=False
     ):
         if min_marker_width_relative is None:
             if coordinate_space:
                 min_marker_width_relative = 0.002
             else:
                 min_marker_width_relative = 0
-        print(chrom, start, end)
+        
         if ws <= 0:
             ws = end - start
         
         for window_start in range(start, end, ws):
-            print("Window: ", window_start, window_start + ws)
+            
             self.pa.figure(**figure_kwargs)
             if title is not None:
                 plt.title(title)
@@ -310,10 +310,15 @@ class Plotter:
                 with_relapse=with_relapse,
                 with_germline=with_germline,
                 must_overlap_position=must_overlap,
+                sample_name_fun=custom_sample_fun,
+                requires_read_names_for_sample_name_fun=requires_read_names_for_sample_name_fun
             )
+            
             
             if merged_matrix is None:
                 continue
+                
+            print("Plotting: ", len(merged_matrix.read_names), "reads!")
             plot_met_profile(
                 np.array(merged_matrix.met_matrix.todense()),
                 samples=merged_matrix.read_samples,
@@ -375,7 +380,7 @@ class Plotter:
                 fontsize=fontsize,
             )
             plt.tick_params(left=False, right=False, labelleft=False)
-            plt.xlabel(f"Location on chr{chrom}")
+            plt.xlabel(f"Location on {chrom}")
             try:
                 plt.ticklabel_format(axis="x", style="plain", useOffset=False)
             except:
@@ -405,9 +410,9 @@ class Plotter:
             sample_order += ["Relapse (HP1)", "Relapse (HP2)"]
         
         sample_order = sample_order[::-1]
-        
+
         def sample_fun(sample, met_matrix):
-            return np.array([f"{sample} (HP{hp})" if hp != -1 else sample for hp in met_matrix.read_samples])
+            return np.array([f"{sample} (HP{hp.replace('H', '')})" if hp != "none" else sample for hp in met_matrix.read_samples])
         
         self.plot_region_custom_samples(
             chrom,
