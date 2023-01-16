@@ -17,13 +17,13 @@ mamba env create -f circleseq.yaml
 Run the analysis for the PDX primary and relapse:
 ```
 # setup variables
-REF={zenodo}/circleseq/annotation/hs37d5_mm10.fa
+REF=../genome/hs37d5_mm10.fa
 PRIMARY_SAMPLE=PDXprimary
 RELAPSE_SAMPLE=PDXrelapse
-PRIMARY_1_FASTQ={zenodo}/circleseq/lane1PrimaryPDX_1_sequence.fq.gz
-PRIMARY_2_FASTQ={zenodo}/circleseq/lane1PrimaryPDX_2_sequence.fq.gz
-RELAPSE_1_FASTQ={zenodo}/circleseq/lane1RelapsePDX_1_sequence.fq.gz
-RELAPSE_2_FASTQ={zenodo}/circleseq/lane1RelapsePDX_2_sequence.fq.gz
+PRIMARY_1_FASTQ=ecDNA/lane1PrimaryPDX_1_sequence.fq.gz
+PRIMARY_2_FASTQ=ecDNA/lane1PrimaryPDX_2_sequence.fq.gz
+RELAPSE_1_FASTQ=ecDNA/lane1RelapsePDX_1_sequence.fq.gz
+RELAPSE_2_FASTQ=ecDNA/lane1RelapsePDX_2_sequence.fq.gz
 
 # run analysis
 bash run.sh
