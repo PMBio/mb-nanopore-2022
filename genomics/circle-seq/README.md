@@ -18,12 +18,8 @@ Run the analysis for the PDX primary and relapse:
 ```
 # setup variables
 REF=../genome/hs37d5_mm10.fa
-PRIMARY_SAMPLE=PDXprimary
-RELAPSE_SAMPLE=PDXrelapse
-PRIMARY_1_FASTQ=ecDNA/lane1PrimaryPDX_1_sequence.fq.gz
-PRIMARY_2_FASTQ=ecDNA/lane1PrimaryPDX_2_sequence.fq.gz
-RELAPSE_1_FASTQ=ecDNA/lane1RelapsePDX_1_sequence.fq.gz
-RELAPSE_2_FASTQ=ecDNA/lane1RelapsePDX_2_sequence.fq.gz
+PRIMARY_SAMPLE=PrimaryPDX
+RELAPSE_SAMPLE=RelapsePDX
 
 # run analysis
 bash run.sh
