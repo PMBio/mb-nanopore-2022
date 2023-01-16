@@ -1,0 +1,13 @@
+name: circleseq
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bedtools==2.29.2
+  - deeptools==3.1.3
+  - homer==4.11
+  - openjdk==11.0.1
+  - picard==2.25.0
+  - python==2.7.15
+  - bwamem==0.7.17
