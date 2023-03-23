@@ -13,8 +13,11 @@ do
     if [ -f ${FQ} ]
     then
 	ID=`echo ${FQ} | sed 's/^.*\///' | sed 's/.fastq.gz$//'`
-	echo ${ID}
-	NanoStat --fastq ${FQ} > ${ID}.nanostat
+	if [ ! -f ${ID}.nanostat ]
+	then
+	    echo ${ID}
+	    NanoStat --fastq ${FQ} > ${ID}.nanostat
+	fi
     fi
 done
 
