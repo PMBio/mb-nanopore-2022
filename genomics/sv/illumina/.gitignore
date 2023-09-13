@@ -1,4 +1,6 @@
 delly.bcf*
+delly.tumor.bcf*
+delly.relapse.bcf*
 germline.bcf*
 tumor.svaba*
 svaba/

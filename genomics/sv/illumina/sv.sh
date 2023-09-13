@@ -10,7 +10,13 @@ HG=${BASEDIR}/../../genome/hg38.fa
 
 # Delly
 delly call -g ${HG} -x human.hg38.excl.tsv -o delly.bcf ${BASEDIR}/../../alignment/illumina/*.bam
-
+for SAMPLE in tumor relapse
+do
+    echo -e "${SAMPLE}\ttumor" > spl.${SAMPLE}.tsv
+    echo -e "blood\tcontrol" >> spl.${SAMPLE}.tsv
+    /opt/dev/delly/src/delly filter -f somatic -s spl.${SAMPLE}.tsv -o delly.${SAMPLE}.bcf delly.bcf
+    rm spl.${SAMPLE}.tsv
+done
 
 # Install manta
 if [ ! -d manta-1.6.0.centos6_x86_64 ]
